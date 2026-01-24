@@ -1,0 +1,64 @@
+# Arquivos do Sistema Operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Node.js e Dependências
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-debug.log*
+
+# Variáveis de Ambiente e Configurações Sensíveis
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+config.local.js
+secrets.js
+
+# APIs e Chaves
+api-keys.json
+firebase-config.js
+*.pem
+*.key
+
+# Build e Distribuição
+dist/
+build/
+.cache/
+.parcel-cache/
+
+# Logs
+*.log
+logs/
+
+# Arquivos Temporários
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Coverage de Testes
+coverage/
+.nyc_output/
+
+# Arquivos de Debug
+debug.log
+.eslintcache
+
+# Assets temporários
+*.wav~
+*.mp3~
