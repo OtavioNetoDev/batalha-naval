@@ -3,6 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Batalha Naval - Jogo clássico de estratégia naval com IA, múltiplos modos e conquistas">
+    <meta name="keywords" content="batalha naval, battleship, jogo, estratégia, naval">
+    <meta name="author" content="Seu Nome">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="⚓ Batalha Naval">
+    <meta property="og:description" content="Jogo clássico de Batalha Naval com IA inteligente e múltiplos modos">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚓</text></svg>">
+    
     <title>⚓ Batalha Naval</title>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,9 +24,10 @@
         <header>
             <h1>⚓ BATALHA NAVAL</h1>
             <div class="controls">
-                <button id="themeToggle" class="btn-icon" title="Tema">🌙</button>
-                <button id="soundToggle" class="btn-icon" title="Som">🔊</button>
-                <button id="helpBtn" class="btn-icon" title="Ajuda">❓</button>
+                <button id="themeToggle" class="btn-icon" title="Alternar Tema" aria-label="Alternar tema">🌙</button>
+                <button id="soundToggle" class="btn-icon" title="Alternar Som" aria-label="Alternar som">🔊</button>
+                <button id="statsBtn" class="btn-icon" title="Estatísticas" aria-label="Ver estatísticas">📊</button>
+                <button id="helpBtn" class="btn-icon" title="Ajuda" aria-label="Abrir ajuda">❓</button>
             </div>
         </header>
 
@@ -46,7 +59,7 @@
                 </div>
 
                 <div class="difficulty-selector">
-                    <label>Dificuldade da IA:</label>
+                    <label for="difficultySelect">Dificuldade da IA:</label>
                     <select id="difficultySelect">
                         <option value="easy">😊 Fácil</option>
                         <option value="medium" selected>😐 Médio</option>
@@ -54,16 +67,44 @@
                         <option value="impossible">👾 Impossível</option>
                     </select>
                 </div>
+
+                <div class="settings-preview">
+                    <div class="setting-item">
+                        <span>🎨 Tema:</span>
+                        <select id="themeSelect">
+                            <option value="ocean">🌊 Oceano</option>
+                            <option value="sunset">🌅 Pôr do Sol</option>
+                            <option value="night">🌃 Noite</option>
+                            <option value="pirate">🏴‍☠️ Pirata</option>
+                            <option value="neon">⚡ Neon</option>
+                            <option value="military">🎖️ Militar</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <span>⚡ Power-ups:</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="powerupsEnabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Tela de Posicionamento -->
         <div id="setupScreen" class="screen">
-            <h2>📍 Posicione Seus Navios</h2>
+            <div class="screen-header">
+                <button id="backToMenuFromSetup" class="btn-back">← Voltar ao Menu</button>
+                <h2>📍 Posicione Seus Navios</h2>
+                <div></div>
+            </div>
             
             <div class="setup-area">
                 <div class="board-container">
                     <div id="setupBoard" class="board"></div>
+                    <div class="setup-legend">
+                        <p>💡 <strong>Dica:</strong> Clique para rotacionar, arraste para posicionar</p>
+                    </div>
                 </div>
 
                 <div class="ships-panel">
@@ -71,6 +112,14 @@
                     <div id="shipsToPlace" class="ships-list">
                         <!-- Navios serão gerados via JS -->
                     </div>
+                    
+                    <div class="progress-indicator">
+                        <span>Progresso: <span id="shipsPlaced">0</span>/5</span>
+                        <div class="progress-bar-setup">
+                            <div id="progressBarFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
                     <div class="setup-controls">
                         <button id="rotateBtn" class="btn-secondary">🔄 Rotacionar</button>
                         <button id="randomBtn" class="btn-secondary">🎲 Aleatório</button>
@@ -83,25 +132,57 @@
 
         <!-- Tela de Batalha -->
         <div id="battleScreen" class="screen">
+            <div class="screen-header">
+                <button id="backToMenuFromBattle" class="btn-back">← Voltar ao Menu</button>
+                <h2>⚔️ Batalha Naval</h2>
+                <div></div>
+            </div>
+            
             <div class="battle-info">
                 <div class="player-info">
                     <h3>🎖️ Sua Frota</h3>
                     <div class="ships-status" id="playerShipsStatus"></div>
+                    <div class="health-bar">
+                        <div class="health-fill" id="playerHealthFill" style="width: 100%"></div>
+                        <span class="health-text"><span id="playerHealth">17</span>/17</span>
+                    </div>
                 </div>
                 
                 <div class="turn-info">
                     <div id="turnIndicator" class="turn-indicator">Sua Vez</div>
-                    <div id="messageDisplay" class="message-display"></div>
+                    <div id="messageDisplay" class="message-display">Clique para atacar!</div>
+                    
+                    <div class="timer-display" id="timerDisplay">
+                        <span class="timer-icon">⏱️</span>
+                        <span id="timerValue">00:00</span>
+                    </div>
+
                     <div class="stats-mini">
-                        <span>🎯 Tiros: <span id="shotsCount">0</span></span>
-                        <span>💥 Acertos: <span id="hitsCount">0</span></span>
-                        <span>📊 Precisão: <span id="accuracyPercent">0%</span></span>
+                        <div class="stat-item">
+                            <span class="stat-icon">🎯</span>
+                            <span class="stat-label">Tiros</span>
+                            <span class="stat-value" id="shotsCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">💥</span>
+                            <span class="stat-label">Acertos</span>
+                            <span class="stat-value" id="hitsCount">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-label">Precisão</span>
+                            <span class="stat-value" id="accuracyPercent">0%</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="enemy-info">
                     <h3>💀 Frota Inimiga</h3>
                     <div class="ships-status" id="enemyShipsStatus"></div>
+                    <div class="health-bar">
+                        <div class="health-fill enemy" id="enemyHealthFill" style="width: 100%"></div>
+                        <span class="health-text"><span id="enemyHealth">17</span>/17</span>
+                    </div>
                 </div>
             </div>
 
@@ -120,17 +201,17 @@
             <div class="powerups-bar" id="powerupsBar">
                 <h4>⚡ Power-ups</h4>
                 <div class="powerups-list">
-                    <button class="btn-powerup" data-powerup="radar" disabled>
+                    <button class="btn-powerup" data-powerup="radar" disabled title="Radar - Revela área 3x3">
                         <span class="powerup-icon">🔍</span>
                         <span class="powerup-name">Radar</span>
                         <span class="powerup-count">0</span>
                     </button>
-                    <button class="btn-powerup" data-powerup="bomb" disabled>
+                    <button class="btn-powerup" data-powerup="bomb" disabled title="Bomba - Ataque em área">
                         <span class="powerup-icon">💣</span>
                         <span class="powerup-name">Bomba</span>
                         <span class="powerup-count">0</span>
                     </button>
-                    <button class="btn-powerup" data-powerup="missile" disabled>
+                    <button class="btn-powerup" data-powerup="missile" disabled title="Míssil - Acerto garantido">
                         <span class="powerup-icon">🎯</span>
                         <span class="powerup-name">Míssil</span>
                         <span class="powerup-count">0</span>
@@ -138,34 +219,242 @@
                 </div>
             </div>
 
-            <button id="surrenderBtn" class="btn-danger">🏳️ Desistir</button>
+            <div class="battle-actions">
+                <button id="pauseBtn" class="btn-secondary">⏸️ Pausar</button>
+                <button id="surrenderBtn" class="btn-danger">🏳️ Desistir</button>
+            </div>
         </div>
 
         <!-- Tela de Resultado -->
         <div id="resultScreen" class="screen">
             <div class="result-content">
                 <h2 id="resultTitle">🏆 VITÓRIA!</h2>
-                <div id="resultStats" class="result-stats"></div>
-                <div id="newAchievements" class="achievements-unlocked"></div>
+                <div id="resultStats" class="result-stats">
+                    <!-- Stats serão inseridas via JS -->
+                </div>
+                <div id="newAchievements" class="achievements-unlocked">
+                    <!-- Conquistas serão inseridas via JS -->
+                </div>
                 <div class="result-buttons">
                     <button id="playAgainBtn" class="btn-primary">🔄 Jogar Novamente</button>
                     <button id="mainMenuBtn" class="btn-secondary">🏠 Menu Principal</button>
+                    <button id="shareBtn" class="btn-secondary">📤 Compartilhar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Ajuda -->
+        <div id="helpModal" class="modal">
+            <div class="modal-content help-modal-content">
+                <span class="modal-close" id="closeHelp">&times;</span>
+                <div id="helpContent" class="help-content">
+                    <div class="help-header">
+                        <h2>📖 Como Jogar Batalha Naval</h2>
+                    </div>
+
+                    <div class="help-section">
+                        <div class="help-card">
+                            <h3>🎯 Objetivo do Jogo</h3>
+                            <p class="help-text">Afunde todos os navios inimigos antes que ele afunde os seus! Seja estratégico e preciso nos seus ataques.</p>
+                        </div>
+
+                        <div class="help-card">
+                            <h3>🚢 Tipos de Navios</h3>
+                            <div class="ships-help-grid">
+                                <div class="ship-help-item">
+                                    <span class="ship-emoji">🛩️</span>
+                                    <div class="ship-details">
+                                        <strong>Porta-Aviões</strong>
+                                        <span>5 células</span>
+                                    </div>
+                                </div>
+                                <div class="ship-help-item">
+                                    <span class="ship-emoji">🚢</span>
+                                    <div class="ship-details">
+                                        <strong>Encouraçado</strong>
+                                        <span>4 células</span>
+                                    </div>
+                                </div>
+                                <div class="ship-help-item">
+                                    <span class="ship-emoji">⛴️</span>
+                                    <div class="ship-details">
+                                        <strong>Cruzador</strong>
+                                        <span>3 células</span>
+                                    </div>
+                                </div>
+                                <div class="ship-help-item">
+                                    <span class="ship-emoji">🔱</span>
+                                    <div class="ship-details">
+                                        <strong>Submarino</strong>
+                                        <span>3 células</span>
+                                    </div>
+                                </div>
+                                <div class="ship-help-item">
+                                    <span class="ship-emoji">🚤</span>
+                                    <div class="ship-details">
+                                        <strong>Destroyer</strong>
+                                        <span>2 células</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="help-card">
+                            <h3>🎮 Como Posicionar</h3>
+                            <div class="steps-grid">
+                                <div class="step-item">
+                                    <div class="step-number">1</div>
+                                    <p>Selecione um navio da lista</p>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">2</div>
+                                    <p>Clique no tabuleiro para posicionar</p>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">3</div>
+                                    <p>Use 🔄 Rotacionar para mudar direção</p>
+                                </div>
+                                <div class="step-item">
+                                    <div class="step-number">4</div>
+                                    <p>Ou clique em 🎲 Aleatório</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="help-card">
+                            <h3>⚡ Power-ups Especiais</h3>
+                            <div class="powerups-help-grid">
+                                <div class="powerup-help-item">
+                                    <span class="powerup-icon-large">🔍</span>
+                                    <strong>Radar</strong>
+                                    <p>Revela uma área 3x3 do tabuleiro inimigo</p>
+                                </div>
+                                <div class="powerup-help-item">
+                                    <span class="powerup-icon-large">💣</span>
+                                    <strong>Bomba</strong>
+                                    <p>Ataque em área causando dano múltiplo</p>
+                                </div>
+                                <div class="powerup-help-item">
+                                    <span class="powerup-icon-large">🎯</span>
+                                    <strong>Míssil</strong>
+                                    <p>Seu próximo tiro acerta garantido</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="help-card">
+                            <h3>🎨 Legenda do Tabuleiro</h3>
+                            <div class="legend-grid">
+                                <div class="legend-item">
+                                    <div class="legend-color water"></div>
+                                    <span>Água (não atacado)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color miss"></div>
+                                    <span>Errou (água)</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color hit"></div>
+                                    <span>Acertou navio</span>
+                                </div>
+                                <div class="legend-item">
+                                    <div class="legend-color sunk"></div>
+                                    <span>Navio afundado</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="help-card tips-card">
+                            <h3>💡 Dicas Estratégicas</h3>
+                            <div class="tips-list">
+                                <div class="tip-item">
+                                    <span class="tip-icon">✓</span>
+                                    <p>Não posicione navios muito próximos uns dos outros</p>
+                                </div>
+                                <div class="tip-item">
+                                    <span class="tip-icon">✓</span>
+                                    <p>Use o radar antes de ataques em área para maximizar dano</p>
+                                </div>
+                                <div class="tip-item">
+                                    <span class="tip-icon">✓</span>
+                                    <p>Observe os padrões de ataque da IA para prever jogadas</p>
+                                </div>
+                                <div class="tip-item">
+                                    <span class="tip-icon">✓</span>
+                                    <p>Guarde power-ups para momentos críticos da batalha</p>
+                                </div>
+                                <div class="tip-item">
+                                    <span class="tip-icon">✓</span>
+                                    <p>Após acertar, ataque as células adjacentes</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="help-footer">
+                        <button class="btn-primary" id="closeHelpBtn">Entendi! Vamos Jogar 🎮</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Estatísticas -->
+        <div id="statsModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" id="closeStats">&times;</span>
+                <div class="stats-content">
+                    <h2>📊 Suas Estatísticas</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Partidas</h3>
+                            <p class="stat-number" id="totalGames">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Vitórias</h3>
+                            <p class="stat-number" id="totalWins">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Taxa de Vitória</h3>
+                            <p class="stat-number" id="winRate">0%</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Precisão Média</h3>
+                            <p class="stat-number" id="avgAccuracy">0%</p>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="statsChart"></canvas>
+                    </div>
+
+                    <div class="achievements-section">
+                        <h3>🏆 Conquistas Desbloqueadas</h3>
+                        <div id="achievementsList" class="achievements-grid">
+                            <!-- Conquistas via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Pausa -->
+        <div id="pauseModal" class="modal">
+            <div class="modal-content">
+                <h2>⏸️ Jogo Pausado</h2>
+                <div class="pause-buttons">
+                    <button id="resumeBtn" class="btn-primary">▶️ Continuar</button>
+                    <button id="restartBtn" class="btn-secondary">🔄 Reiniciar</button>
+                    <button id="quitBtn" class="btn-danger">🏠 Sair para Menu</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Ajuda -->
-    <div id="helpModal" class="modal">
-        <div class="modal-content">
-            <span class="modal-close">&times;</span>
-            <h2>📖 Como Jogar</h2>
-            <div class="help-content">
-                <!-- Conteúdo será adicionado via JS -->
-            </div>
-        </div>
-    </div>
+    <!-- Partículas de fundo (canvas) -->
+    <canvas id="particlesCanvas"></canvas>
 
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
