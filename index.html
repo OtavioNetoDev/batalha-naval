@@ -6,21 +6,25 @@
     <meta name="description" content="Batalha Naval - Jogo clássico de estratégia naval com IA, múltiplos modos e conquistas">
     <meta name="keywords" content="batalha naval, battleship, jogo, estratégia, naval">
     <meta name="author" content="Seu Nome">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:title" content="⚓ Batalha Naval">
-    <meta property="og:description" content="Jogo clássico de Batalha Naval com IA inteligente e múltiplos modos">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚓</text></svg>">
-    
-    <title>⚓ Batalha Naval</title>
+    >
+    <title> Batalha Naval</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="splashScreen">
+    <div class="splash-logo">
+        <span class="logo-anchor">⚓</span>
+        <h1 class="logo-text">BATALHA NAVAL</h1>
+    </div>
+    <div class="radar-container">
+        <div class="radar"></div>
+        <p class="loading-message">Prepare-se para a batalha!</p>
+    </div>
+</div>
     <div class="container">
-        <!-- Header -->
+        <!-- ========================================
+             HEADER GLOBAL
+             ======================================== -->
         <header>
             <h1>⚓ BATALHA NAVAL</h1>
             <div class="controls">
@@ -31,7 +35,9 @@
             </div>
         </header>
 
-        <!-- Menu Principal -->
+        <!-- ========================================
+             MENU PRINCIPAL
+             ======================================== -->
         <div id="mainMenu" class="screen active">
             <div class="menu-content">
                 <h2>Escolha o Modo de Jogo</h2>
@@ -41,7 +47,7 @@
                         <span class="menu-title">Clássico</span>
                         <span class="menu-desc">Batalha tradicional vs IA</span>
                     </button>
-                    <button class="btn-menu" data-mode="salvo">
+                    <button class="btn-menu" data-mode="sos">
                         <span class="menu-icon">🆘</span>
                         <span class="menu-title">Salva</span>
                         <span class="menu-desc">Missões de resgate</span>
@@ -91,7 +97,24 @@
             </div>
         </div>
 
-        <!-- Tela de Posicionamento -->
+        <!-- ========================================
+             TELA DE SELEÇÃO (SOS/CAMPANHA)
+             ======================================== -->
+        <div id="selectionScreen" class="screen">
+            <div class="screen-header">
+                <button id="backToMenuFromSelection" class="btn-back">← Voltar ao Menu</button>
+                <h2 id="selectionTitle">Selecione a Missão</h2>
+                <div></div>
+            </div>
+
+            <div id="selectionContent" class="selection-content">
+                <!-- Conteúdo dinâmico: missões ou níveis -->
+            </div>
+        </div>
+
+        <!-- ========================================
+             TELA DE POSICIONAMENTO
+             ======================================== -->
         <div id="setupScreen" class="screen">
             <div class="screen-header">
                 <button id="backToMenuFromSetup" class="btn-back">← Voltar ao Menu</button>
@@ -103,7 +126,7 @@
                 <div class="board-container">
                     <div id="setupBoard" class="board"></div>
                     <div class="setup-legend">
-                        <p>💡 <strong>Dica:</strong> Clique para rotacionar, arraste para posicionar</p>
+                        <p id="setupInstructions">💡 <strong>Dica:</strong> Clique para posicionar, rotacione com o botão</p>
                     </div>
                 </div>
 
@@ -114,7 +137,7 @@
                     </div>
                     
                     <div class="progress-indicator">
-                        <span>Progresso: <span id="shipsPlaced">0</span>/5</span>
+                        <span>Progresso: <span id="shipsPlaced">0</span>/<span id="shipsTotal">5</span></span>
                         <div class="progress-bar-setup">
                             <div id="progressBarFill" class="progress-fill"></div>
                         </div>
@@ -130,17 +153,19 @@
             </div>
         </div>
 
-        <!-- Tela de Batalha -->
+        <!-- ========================================
+             TELA DE BATALHA
+             ======================================== -->
         <div id="battleScreen" class="screen">
             <div class="screen-header">
                 <button id="backToMenuFromBattle" class="btn-back">← Voltar ao Menu</button>
-                <h2>⚔️ Batalha Naval</h2>
+                <h2 id="battleTitle">⚔️ Batalha Naval</h2>
                 <div></div>
             </div>
             
             <div class="battle-info">
                 <div class="player-info">
-                    <h3>🎖️ Sua Frota</h3>
+                    <h3 id="playerTitle">🎖️ Sua Frota</h3>
                     <div class="ships-status" id="playerShipsStatus"></div>
                     <div class="health-bar">
                         <div class="health-fill" id="playerHealthFill" style="width: 100%"></div>
@@ -149,6 +174,10 @@
                 </div>
                 
                 <div class="turn-info">
+                    <div id="missionObjectives" class="mission-objectives" style="display: none;">
+                        <!-- Objetivos do modo SOS -->
+                    </div>
+
                     <div id="turnIndicator" class="turn-indicator">Sua Vez</div>
                     <div id="messageDisplay" class="message-display">Clique para atacar!</div>
                     
@@ -177,7 +206,7 @@
                 </div>
 
                 <div class="enemy-info">
-                    <h3>💀 Frota Inimiga</h3>
+                    <h3 id="enemyTitle">💀 Frota Inimiga</h3>
                     <div class="ships-status" id="enemyShipsStatus"></div>
                     <div class="health-bar">
                         <div class="health-fill enemy" id="enemyHealthFill" style="width: 100%"></div>
@@ -188,17 +217,17 @@
 
             <div class="boards-container">
                 <div class="board-wrapper">
-                    <h3>Seu Tabuleiro</h3>
+                    <h3 id="playerBoardTitle">Seu Tabuleiro</h3>
                     <div id="playerBoard" class="board"></div>
                 </div>
 
                 <div class="board-wrapper">
-                    <h3>Tabuleiro Inimigo</h3>
+                    <h3 id="enemyBoardTitle">Tabuleiro Inimigo</h3>
                     <div id="enemyBoard" class="board attack-board"></div>
                 </div>
             </div>
 
-            <div class="powerups-bar" id="powerupsBar">
+            <div class="powerups-bar" id="powerupsBar" style="display: none;">
                 <h4>⚡ Power-ups</h4>
                 <div class="powerups-list">
                     <button class="btn-powerup" data-powerup="radar" disabled title="Radar - Revela área 3x3">
@@ -225,7 +254,21 @@
             </div>
         </div>
 
-        <!-- Tela de Resultado -->
+        <!-- ========================================
+             TELA DE TRANSIÇÃO (MULTIPLAYER)
+             ======================================== -->
+        <div id="transitionScreen" class="screen">
+            <div class="transition-content">
+                <h2 id="transitionTitle">Vez do Jogador 1</h2>
+                <div class="transition-icon">👤</div>
+                <p id="transitionMessage">Prepare-se para sua jogada!</p>
+                <button id="readyBtn" class="btn-primary">✓ Estou Pronto</button>
+            </div>
+        </div>
+
+        <!-- ========================================
+             TELA DE RESULTADO
+             ======================================== -->
         <div id="resultScreen" class="screen">
             <div class="result-content">
                 <h2 id="resultTitle">🏆 VITÓRIA!</h2>
@@ -237,11 +280,16 @@
                 </div>
                 <div class="result-buttons">
                     <button id="playAgainBtn" class="btn-primary">🔄 Jogar Novamente</button>
+                    <button id="nextLevelBtn" class="btn-primary" style="display: none;">➡️ Próximo Nível</button>
                     <button id="mainMenuBtn" class="btn-secondary">🏠 Menu Principal</button>
                     <button id="shareBtn" class="btn-secondary">📤 Compartilhar</button>
                 </div>
             </div>
         </div>
+
+        <!-- ========================================
+             MODAIS
+             ======================================== -->
 
         <!-- Modal de Ajuda -->
         <div id="helpModal" class="modal">
@@ -451,11 +499,12 @@
         </div>
     </div>
 
-    <!-- Partículas de fundo (canvas) -->
-    <canvas id="particlesCanvas"></canvas>
-
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="script.js"></script>
+    <script src="script-core.js"></script>
+    <script src="script-classic.js"></script>
+    <script src="script-sos.js"></script>
+    <script src="script-campaign.js"></script>
+    <script src="script-multiplayer.js"></script>
 </body>
 </html>
