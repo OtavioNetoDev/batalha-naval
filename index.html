@@ -6,25 +6,23 @@
     <meta name="description" content="Batalha Naval - Jogo clássico de estratégia naval com IA, múltiplos modos e conquistas">
     <meta name="keywords" content="batalha naval, battleship, jogo, estratégia, naval">
     <meta name="author" content="Seu Nome">
-    >
+
     <title> Batalha Naval</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="splashScreen">
-    <div class="splash-logo">
-        <span class="logo-anchor">⚓</span>
-        <h1 class="logo-text">BATALHA NAVAL</h1>
+        <div class="splash-logo">
+            <span class="logo-anchor">⚓</span>
+            <h1 class="logo-text">BATALHA NAVAL</h1>
+        </div>
+        <div class="radar-container">
+            <div class="radar"></div>
+            <p class="loading-message">Prepare-se para a batalha!</p>
+        </div>
     </div>
-    <div class="radar-container">
-        <div class="radar"></div>
-        <p class="loading-message">Prepare-se para a batalha!</p>
-    </div>
-</div>
+
     <div class="container">
-        <!-- ========================================
-             HEADER GLOBAL
-             ======================================== -->
         <header>
             <h1>⚓ BATALHA NAVAL</h1>
             <div class="controls">
@@ -35,9 +33,6 @@
             </div>
         </header>
 
-        <!-- ========================================
-             MENU PRINCIPAL
-             ======================================== -->
         <div id="mainMenu" class="screen active">
             <div class="menu-content">
                 <h2>Escolha o Modo de Jogo</h2>
@@ -97,31 +92,21 @@
             </div>
         </div>
 
-        <!-- ========================================
-             TELA DE SELEÇÃO (SOS/CAMPANHA)
-             ======================================== -->
         <div id="selectionScreen" class="screen">
             <div class="screen-header">
                 <button id="backToMenuFromSelection" class="btn-back">← Voltar ao Menu</button>
                 <h2 id="selectionTitle">Selecione a Missão</h2>
                 <div></div>
             </div>
-
-            <div id="selectionContent" class="selection-content">
-                <!-- Conteúdo dinâmico: missões ou níveis -->
-            </div>
+            <div id="selectionContent" class="selection-content"></div>
         </div>
 
-        <!-- ========================================
-             TELA DE POSICIONAMENTO
-             ======================================== -->
         <div id="setupScreen" class="screen">
             <div class="screen-header">
                 <button id="backToMenuFromSetup" class="btn-back">← Voltar ao Menu</button>
                 <h2>📍 Posicione Seus Navios</h2>
                 <div></div>
             </div>
-            
             <div class="setup-area">
                 <div class="board-container">
                     <div id="setupBoard" class="board"></div>
@@ -129,20 +114,15 @@
                         <p id="setupInstructions">💡 <strong>Dica:</strong> Clique para posicionar, rotacione com o botão</p>
                     </div>
                 </div>
-
                 <div class="ships-panel">
                     <h3>Navios Disponíveis</h3>
-                    <div id="shipsToPlace" class="ships-list">
-                        <!-- Navios serão gerados via JS -->
-                    </div>
-                    
+                    <div id="shipsToPlace" class="ships-list"></div>
                     <div class="progress-indicator">
                         <span>Progresso: <span id="shipsPlaced">0</span>/<span id="shipsTotal">5</span></span>
                         <div class="progress-bar-setup">
                             <div id="progressBarFill" class="progress-fill"></div>
                         </div>
                     </div>
-
                     <div class="setup-controls">
                         <button id="rotateBtn" class="btn-secondary">🔄 Rotacionar</button>
                         <button id="randomBtn" class="btn-secondary">🎲 Aleatório</button>
@@ -153,9 +133,6 @@
             </div>
         </div>
 
-        <!-- ========================================
-             TELA DE BATALHA
-             ======================================== -->
         <div id="battleScreen" class="screen">
             <div class="screen-header">
                 <button id="backToMenuFromBattle" class="btn-back">← Voltar ao Menu</button>
@@ -175,29 +152,29 @@
                 
                 <div class="turn-info">
                     <div id="missionObjectives" class="mission-objectives" style="display: none;">
-                        <!-- Objetivos do modo SOS -->
+                        Objetivo: Resgatar <span id="savedCount">0 / 0</span> sobreviventes
                     </div>
 
                     <div id="turnIndicator" class="turn-indicator">Sua Vez</div>
                     <div id="messageDisplay" class="message-display">Clique para atacar!</div>
                     
                     <div class="timer-display" id="timerDisplay">
-                        <span class="timer-icon">⏱️</span>
+                        <span class="timer-label">TEMPO RESTANTE</span>
                         <span id="timerValue">00:00</span>
                     </div>
 
                     <div class="stats-mini">
-                        <div class="stat-item">
+                        <div class="stat-item shots-item">
                             <span class="stat-icon">🎯</span>
                             <span class="stat-label">Tiros</span>
                             <span class="stat-value" id="shotsCount">0</span>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-item hits-item">
                             <span class="stat-icon">💥</span>
                             <span class="stat-label">Acertos</span>
                             <span class="stat-value" id="hitsCount">0</span>
                         </div>
-                        <div class="stat-item">
+                        <div class="stat-item precision-item">
                             <span class="stat-icon">📊</span>
                             <span class="stat-label">Precisão</span>
                             <span class="stat-value" id="accuracyPercent">0%</span>
@@ -220,7 +197,6 @@
                     <h3 id="playerBoardTitle">Seu Tabuleiro</h3>
                     <div id="playerBoard" class="board"></div>
                 </div>
-
                 <div class="board-wrapper">
                     <h3 id="enemyBoardTitle">Tabuleiro Inimigo</h3>
                     <div id="enemyBoard" class="board attack-board"></div>
@@ -230,21 +206,9 @@
             <div class="powerups-bar" id="powerupsBar" style="display: none;">
                 <h4>⚡ Power-ups</h4>
                 <div class="powerups-list">
-                    <button class="btn-powerup" data-powerup="radar" disabled title="Radar - Revela área 3x3">
-                        <span class="powerup-icon">🔍</span>
-                        <span class="powerup-name">Radar</span>
-                        <span class="powerup-count">0</span>
-                    </button>
-                    <button class="btn-powerup" data-powerup="bomb" disabled title="Bomba - Ataque em área">
-                        <span class="powerup-icon">💣</span>
-                        <span class="powerup-name">Bomba</span>
-                        <span class="powerup-count">0</span>
-                    </button>
-                    <button class="btn-powerup" data-powerup="missile" disabled title="Míssil - Acerto garantido">
-                        <span class="powerup-icon">🎯</span>
-                        <span class="powerup-name">Míssil</span>
-                        <span class="powerup-count">0</span>
-                    </button>
+                    <button class="btn-powerup" data-powerup="radar" disabled title="Radar">🔍</button>
+                    <button class="btn-powerup" data-powerup="bomb" disabled title="Bomba">💣</button>
+                    <button class="btn-powerup" data-powerup="missile" disabled title="Míssil">🎯</button>
                 </div>
             </div>
 
@@ -254,255 +218,33 @@
             </div>
         </div>
 
-        <!-- ========================================
-             TELA DE TRANSIÇÃO (MULTIPLAYER)
-             ======================================== -->
-        <div id="transitionScreen" class="screen">
-            <div class="transition-content">
-                <h2 id="transitionTitle">Vez do Jogador 1</h2>
-                <div class="transition-icon">👤</div>
-                <p id="transitionMessage">Prepare-se para sua jogada!</p>
-                <button id="readyBtn" class="btn-primary">✓ Estou Pronto</button>
-            </div>
-        </div>
-
-        <!-- ========================================
-             TELA DE RESULTADO
-             ======================================== -->
         <div id="resultScreen" class="screen">
             <div class="result-content">
                 <h2 id="resultTitle">🏆 VITÓRIA!</h2>
-                <div id="resultStats" class="result-stats">
-                    <!-- Stats serão inseridas via JS -->
-                </div>
-                <div id="newAchievements" class="achievements-unlocked">
-                    <!-- Conquistas serão inseridas via JS -->
-                </div>
+                <div id="resultStats" class="result-stats"></div>
                 <div class="result-buttons">
                     <button id="playAgainBtn" class="btn-primary">🔄 Jogar Novamente</button>
-                    <button id="nextLevelBtn" class="btn-primary" style="display: none;">➡️ Próximo Nível</button>
                     <button id="mainMenuBtn" class="btn-secondary">🏠 Menu Principal</button>
-                    <button id="shareBtn" class="btn-secondary">📤 Compartilhar</button>
                 </div>
             </div>
         </div>
 
-        <!-- ========================================
-             MODAIS
-             ======================================== -->
-
-        <!-- Modal de Ajuda -->
-        <div id="helpModal" class="modal">
-            <div class="modal-content help-modal-content">
-                <span class="modal-close" id="closeHelp">&times;</span>
-                <div id="helpContent" class="help-content">
-                    <div class="help-header">
-                        <h2>📖 Como Jogar Batalha Naval</h2>
-                    </div>
-
-                    <div class="help-section">
-                        <div class="help-card">
-                            <h3>🎯 Objetivo do Jogo</h3>
-                            <p class="help-text">Afunde todos os navios inimigos antes que ele afunde os seus! Seja estratégico e preciso nos seus ataques.</p>
-                        </div>
-
-                        <div class="help-card">
-                            <h3>🚢 Tipos de Navios</h3>
-                            <div class="ships-help-grid">
-                                <div class="ship-help-item">
-                                    <span class="ship-emoji">🛩️</span>
-                                    <div class="ship-details">
-                                        <strong>Porta-Aviões</strong>
-                                        <span>5 células</span>
-                                    </div>
-                                </div>
-                                <div class="ship-help-item">
-                                    <span class="ship-emoji">🚢</span>
-                                    <div class="ship-details">
-                                        <strong>Encouraçado</strong>
-                                        <span>4 células</span>
-                                    </div>
-                                </div>
-                                <div class="ship-help-item">
-                                    <span class="ship-emoji">⛴️</span>
-                                    <div class="ship-details">
-                                        <strong>Cruzador</strong>
-                                        <span>3 células</span>
-                                    </div>
-                                </div>
-                                <div class="ship-help-item">
-                                    <span class="ship-emoji">🔱</span>
-                                    <div class="ship-details">
-                                        <strong>Submarino</strong>
-                                        <span>3 células</span>
-                                    </div>
-                                </div>
-                                <div class="ship-help-item">
-                                    <span class="ship-emoji">🚤</span>
-                                    <div class="ship-details">
-                                        <strong>Destroyer</strong>
-                                        <span>2 células</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="help-card">
-                            <h3>🎮 Como Posicionar</h3>
-                            <div class="steps-grid">
-                                <div class="step-item">
-                                    <div class="step-number">1</div>
-                                    <p>Selecione um navio da lista</p>
-                                </div>
-                                <div class="step-item">
-                                    <div class="step-number">2</div>
-                                    <p>Clique no tabuleiro para posicionar</p>
-                                </div>
-                                <div class="step-item">
-                                    <div class="step-number">3</div>
-                                    <p>Use 🔄 Rotacionar para mudar direção</p>
-                                </div>
-                                <div class="step-item">
-                                    <div class="step-number">4</div>
-                                    <p>Ou clique em 🎲 Aleatório</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="help-card">
-                            <h3>⚡ Power-ups Especiais</h3>
-                            <div class="powerups-help-grid">
-                                <div class="powerup-help-item">
-                                    <span class="powerup-icon-large">🔍</span>
-                                    <strong>Radar</strong>
-                                    <p>Revela uma área 3x3 do tabuleiro inimigo</p>
-                                </div>
-                                <div class="powerup-help-item">
-                                    <span class="powerup-icon-large">💣</span>
-                                    <strong>Bomba</strong>
-                                    <p>Ataque em área causando dano múltiplo</p>
-                                </div>
-                                <div class="powerup-help-item">
-                                    <span class="powerup-icon-large">🎯</span>
-                                    <strong>Míssil</strong>
-                                    <p>Seu próximo tiro acerta garantido</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="help-card">
-                            <h3>🎨 Legenda do Tabuleiro</h3>
-                            <div class="legend-grid">
-                                <div class="legend-item">
-                                    <div class="legend-color water"></div>
-                                    <span>Água (não atacado)</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color miss"></div>
-                                    <span>Errou (água)</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color hit"></div>
-                                    <span>Acertou navio</span>
-                                </div>
-                                <div class="legend-item">
-                                    <div class="legend-color sunk"></div>
-                                    <span>Navio afundado</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="help-card tips-card">
-                            <h3>💡 Dicas Estratégicas</h3>
-                            <div class="tips-list">
-                                <div class="tip-item">
-                                    <span class="tip-icon">✓</span>
-                                    <p>Não posicione navios muito próximos uns dos outros</p>
-                                </div>
-                                <div class="tip-item">
-                                    <span class="tip-icon">✓</span>
-                                    <p>Use o radar antes de ataques em área para maximizar dano</p>
-                                </div>
-                                <div class="tip-item">
-                                    <span class="tip-icon">✓</span>
-                                    <p>Observe os padrões de ataque da IA para prever jogadas</p>
-                                </div>
-                                <div class="tip-item">
-                                    <span class="tip-icon">✓</span>
-                                    <p>Guarde power-ups para momentos críticos da batalha</p>
-                                </div>
-                                <div class="tip-item">
-                                    <span class="tip-icon">✓</span>
-                                    <p>Após acertar, ataque as células adjacentes</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="help-footer">
-                        <button class="btn-primary" id="closeHelpBtn">Entendi! Vamos Jogar 🎮</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal de Estatísticas -->
-        <div id="statsModal" class="modal">
-            <div class="modal-content">
-                <span class="modal-close" id="closeStats">&times;</span>
-                <div class="stats-content">
-                    <h2>📊 Suas Estatísticas</h2>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <h3>Partidas</h3>
-                            <p class="stat-number" id="totalGames">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Vitórias</h3>
-                            <p class="stat-number" id="totalWins">0</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Taxa de Vitória</h3>
-                            <p class="stat-number" id="winRate">0%</p>
-                        </div>
-                        <div class="stat-card">
-                            <h3>Precisão Média</h3>
-                            <p class="stat-number" id="avgAccuracy">0%</p>
-                        </div>
-                    </div>
-
-                    <div class="chart-container">
-                        <canvas id="statsChart"></canvas>
-                    </div>
-
-                    <div class="achievements-section">
-                        <h3>🏆 Conquistas Desbloqueadas</h3>
-                        <div id="achievementsList" class="achievements-grid">
-                            <!-- Conquistas via JS -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal de Pausa -->
         <div id="pauseModal" class="modal">
             <div class="modal-content">
                 <h2>⏸️ Jogo Pausado</h2>
                 <div class="pause-buttons">
                     <button id="resumeBtn" class="btn-primary">▶️ Continuar</button>
-                    <button id="restartBtn" class="btn-secondary">🔄 Reiniciar</button>
-                    <button id="quitBtn" class="btn-danger">🏠 Sair para Menu</button>
+                    <button id="modalRestartBtn" class="btn-secondary">🔄 Reiniciar</button>
+                    <button id="quitBtn" class="btn-danger">🏠 Menu Principal</button>
                 </div>
             </div>
         </div>
-    </div>
+        
+        </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script-core.js"></script>
-    <script src="script-classic.js"></script>
+    <script src="script-classic.js"></script> 
     <script src="script-sos.js"></script>
     <script src="script-campaign.js"></script>
     <script src="script-multiplayer.js"></script>
