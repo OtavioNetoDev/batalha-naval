@@ -1506,39 +1506,6 @@ body.dark-mode .cell.miss {
     margin-top: 15px;
 }
 
-/* Animações */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes fadeInScale {
-    0% { opacity: 0; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1); }
-}
-
-@keyframes anchorRotate {
-    0% { transform: rotate(0deg); }
-    50% { transform: rotate(-5deg); }
-    100% { transform: rotate(0deg); }
-}
-
-@keyframes textGlow {
-    0% { text-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
-    50% { text-shadow: 0 0 25px rgba(100, 255, 218, 0.9), 0 0 40px rgba(100, 255, 218, 0.6); }
-    100% { text-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
-}
-
-@keyframes radar-sweep {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-@keyframes pulseText {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 1; }
-}
-
 /* ========================================
    MODO ESCURO - AJUDA E DICAS (CORREÇÃO)
    ======================================== */
@@ -1592,4 +1559,220 @@ body.dark-mode .legend-item {
     padding: 8px;
     border-radius: 5px;
     margin: 5px 0;
+}
+
+/* Efeito de Célula Resgatada */
+body.dark-mode .cell.rescued {
+    background-color: #64ffda !important; /* Ciano Neon */
+    box-shadow: inset 0 0 15px #000, 0 0 20px rgba(100, 255, 218, 0.8);
+    animation: rescuePulse 1.5s infinite;
+    cursor: default;
+}
+
+@keyframes rescuePulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(0.95); filter: brightness(1.3); }
+    100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Container de Objetivos */
+.mission-objectives {
+    background: rgba(17, 34, 64, 0.9);
+    border: 1px solid #64ffda;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    display: none; /* Só aparece no modo SOS */
+}
+
+body.dark-mode #missionObjectives {
+    display: block; /* Ativa no modo SOS */
+}
+/* Estilo para os Cards de Missão no Modo Escuro */
+body.dark-mode .mission-card {
+    background-color: #112240;
+    border: 2px solid #233554;
+    color: #e6f1ff;
+    padding: 20px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+body.dark-mode .mission-card:hover {
+    border-color: #64ffda;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Objetivos dentro da Batalha */
+body.dark-mode .objective {
+    background: rgba(100, 255, 218, 0.1);
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin: 5px 0;
+    border-left: 3px solid #64ffda;
+}
+
+body.dark-mode .objective.completed {
+    border-left-color: #2ecc71;
+    text-decoration: line-through;
+    opacity: 0.7;
+}
+
+/* Esconde por padrão, o JS decide quando mostrar */
+#missionObjectives {
+    display: none;
+}
+
+/* Garante que o container de objetivos fique dentro da área de batalha */
+#battleScreen #missionObjectives {
+    margin-top: 10px;
+    border: 1px solid #64ffda;
+    background: rgba(10, 25, 47, 0.8);
+}
+
+/* ========================================
+   SISTEMA DE ANIMAÇÕES GLOBAIS
+   ======================================== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rescuePulse {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(0.95); filter: brightness(1.3); box-shadow: 0 0 20px rgba(100, 255, 218, 0.8); }
+}
+
+@keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   MODO ESCURO (DARK MODE) - REGRAS MESTRAS
+   ======================================== */
+body.dark-mode {
+    background: #0a192f !important;
+    color: #e6f1ff;
+}
+
+body.dark-mode .container {
+    background: #112240 !important;
+    border: 1px solid #233554;
+}
+
+/* Cards e Painéis */
+body.dark-mode .menu-content, 
+body.dark-mode .mission-card, 
+body.dark-mode .ships-panel, 
+body.dark-mode .player-info, 
+body.dark-mode .enemy-info,
+body.dark-mode .modal-content,
+body.dark-mode .setup-area {
+    background-color: #1d2d50 !important;
+    border: 1px solid #64ffda44;
+    color: #ffffff;
+}
+
+/* Títulos e Destaques */
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3, 
+body.dark-mode .menu-title,
+body.dark-mode .stat-value {
+    color: #64ffda !important;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+}
+
+/* Mensagens de Feedback (Ciano para saltar aos olhos) */
+body.dark-mode .message-display, 
+body.dark-mode .turn-indicator {
+    background: #64ffda !important;
+    color: #0a192f !important;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(100, 255, 218, 0.4);
+}
+
+/* ========================================
+   MODO SOS (ESPECÍFICO)
+   ======================================== */
+/* O container só aparece se a classe sos-active estiver no body */
+#missionObjectives {
+    display: none; 
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 2px solid var(--primary-color);
+}
+
+body.sos-active #missionObjectives {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+/* Estilo das células no modo SOS */
+.cell.rescued {
+    background: #2ecc71 !important;
+    animation: rescuePulse 1.5s infinite;
+}
+
+body.dark-mode .cell.rescued {
+    background: #64ffda !important;
+    box-shadow: 0 0 15px rgba(100, 255, 218, 0.6);
+}
+
+/* Objetivos Individuais */
+.objective {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(0,0,0,0.05);
+    border-radius: 5px;
+}
+
+body.dark-mode .objective {
+    background: rgba(100, 255, 218, 0.1);
+    border-left: 3px solid #64ffda;
+}
+
+.objective.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+    border-left-color: #2ecc71;
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes anchorRotate {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-5deg); }
+    100% { transform: rotate(0deg); }
+}
+
+@keyframes textGlow {
+    0% { text-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
+    50% { text-shadow: 0 0 25px rgba(100, 255, 218, 0.9), 0 0 40px rgba(100, 255, 218, 0.6); }
+    100% { text-shadow: 0 0 10px rgba(100, 255, 218, 0.5); }
+}
+
+@keyframes radar-sweep {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
 }
