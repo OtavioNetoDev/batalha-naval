@@ -51,6 +51,21 @@ class BattleshipGame {
         this.sosObstacles = [];
         this.sosSurvivors = [];
         this.sosBoardSize = 10;
+        
+        // Multiplayer
+        this.multiplayerState = {
+            player1Name: 'Jogador 1',
+            player2Name: 'Jogador 2',
+            player1Board: [],
+            player2Board: [],
+            player1Ships: [],
+            player2Ships: [],
+            currentPlayer: 1,
+            player1Stats: { shotsGiven: 0, hits: 0, misses: 0, shipsDestroyed: 0 },
+            player2Stats: { shotsGiven: 0, hits: 0, misses: 0, shipsDestroyed: 0 },
+            placementPhase: 1
+        };
+        
         this.loadSettings();
         this.loadStats();
         this.applyTheme();
@@ -141,9 +156,15 @@ class BattleshipGame {
 
     startGame(mode) {
         this.gameMode = mode;
+        window.scrollTo({ top: 0, behavior: 'instant' });
         
         if (mode === 'sos') {
             this.showScreen('sosMissionScreen');
+            return;
+        }
+        
+        if (mode === 'multiplayer') {
+            this.startMultiplayer();
             return;
         }
         
@@ -154,6 +175,446 @@ class BattleshipGame {
         this.renderShipsToPlace();
         document.getElementById('playerNameDisplay').textContent = this.settings.playerName;
     }
+
+    // ========== MULTIPLAYER ==========
+    startMultiplayer() {
+        // Mostrar modal para inserir nomes dos jogadores
+        const modal = document.getElementById('gameOverModal');
+        const title = document.getElementById('gameOverTitle');
+        const message = document.getElementById('gameOverMessage');
+        const buttons = document.getElementById('gameOverButtons');
+        
+        title.textContent = '👥 MODO MULTIPLAYER';
+        message.innerHTML = `
+            <p style="margin-bottom: 1.5rem;">Digite os nomes dos jogadores:</p>
+            <div style="margin-bottom: 1rem; text-align: left;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">🎮 Jogador 1:</label>
+                <input type="text" id="player1NameInput" value="Jogador 1" maxlength="20" 
+                    style="width: 100%; padding: 0.8rem; font-size: 1.1rem; border-radius: 6px; border: 2px solid var(--panel-border); background: var(--cell-bg); color: var(--text-primary);">
+            </div>
+            <div style="margin-bottom: 1rem; text-align: left;">
+                <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">🎮 Jogador 2:</label>
+                <input type="text" id="player2NameInput" value="Jogador 2" maxlength="20"
+                    style="width: 100%; padding: 0.8rem; font-size: 1.1rem; border-radius: 6px; border: 2px solid var(--panel-border); background: var(--cell-bg); color: var(--text-primary);">
+            </div>
+        `;
+        
+        buttons.innerHTML = `
+            <button class="btn btn-primary" onclick="game.confirmMultiplayerNames()">✓ Começar Jogo</button>
+            <button class="btn btn-secondary" onclick="game.closeModalAndAction(() => game.returnToMenu())">🏠 Cancelar</button>
+        `;
+        
+        modal.classList.add('active');
+    }
+
+    confirmMultiplayerNames() {
+        const player1Name = document.getElementById('player1NameInput').value.trim() || 'Jogador 1';
+        const player2Name = document.getElementById('player2NameInput').value.trim() || 'Jogador 2';
+        
+        this.multiplayerState.player1Name = player1Name;
+        this.multiplayerState.player2Name = player2Name;
+        this.multiplayerState.placementPhase = 1;
+        this.multiplayerState.currentPlayer = 1;
+        
+        document.getElementById('gameOverModal').classList.remove('active');
+        
+        this.resetGame();
+        this.gameState = 'placement';
+        this.showScreen('placementScreen');
+        this.initPlacementBoard();
+        this.renderShipsToPlace();
+        
+        // Atualizar título para mostrar qual jogador está posicionando
+        const placementTitle = document.querySelector('#placementScreen h2');
+        placementTitle.textContent = `🚢 ${player1Name} - Posicione Seus Navios`;
+        
+        alert(`🎮 ${player1Name}, posicione seus navios!\n\n⚠️ Certifique-se de que ${player2Name} não está olhando!`);
+    }
+
+    confirmPlacement() {
+        const requiredShips = this.gameMode === 'sos' ? 3 : SHIPS.length;
+        const shipsPlaced = this.playerShips.filter(s => s).length;
+    
+        if (shipsPlaced < requiredShips) {
+            alert(`⚠️ Você precisa posicionar todos os ${requiredShips} navios antes de continuar!\n\nNavios posicionados: ${shipsPlaced}/${requiredShips}`);
+            return; // Bloqueia a continuação
+        }
+
+        if (this.gameMode === 'multiplayer') {
+            if (this.multiplayerState.placementPhase === 1) {
+                // Jogador 1 terminou, salvar navios
+                this.multiplayerState.player1Board = this.playerBoard.map(row => [...row]);
+                this.multiplayerState.player1Ships = JSON.parse(JSON.stringify(this.playerShips));
+                
+                // Preparar para Jogador 2
+                this.multiplayerState.placementPhase = 2;
+                this.playerBoard = this.createEmptyBoard();
+                this.playerShips = [];
+                this.currentShipIndex = null;
+                
+                this.initPlacementBoard();
+                this.renderShipsToPlace();
+                
+                const placementTitle = document.querySelector('#placementScreen h2');
+                placementTitle.textContent = `🚢 ${this.multiplayerState.player2Name} - Posicione Seus Navios`;
+                
+                alert(`🎮 ${this.multiplayerState.player2Name}, é sua vez!\n\n⚠️ Certifique-se de que ${this.multiplayerState.player1Name} não está olhando!`);
+                
+            } else {
+                // Jogador 2 terminou, iniciar jogo
+                this.multiplayerState.player2Board = this.playerBoard.map(row => [...row]);
+                this.multiplayerState.player2Ships = JSON.parse(JSON.stringify(this.playerShips));
+                
+                this.startMultiplayerGame();
+            }
+        } else {
+            // Lógica original para outros modos
+            this.aiPlaceShips();
+            this.gameState = 'playing';
+            this.showScreen('gameScreen');
+            
+            document.getElementById('enemyBoardSection').style.display = 'block';
+            document.getElementById('playerBoardSection').style.display = 'block';
+            document.getElementById('sosBoardSection').style.display = 'none';
+            
+            this.initGameBoards();
+            this.updateGameInfo();
+            this.updateModeUI();
+        }
+    }
+
+    startMultiplayerGame() {
+        this.gameState = 'playing';
+        this.multiplayerState.currentPlayer = 1;
+        
+        // Resetar stats
+        this.multiplayerState.player1Stats = { shotsGiven: 0, hits: 0, misses: 0, shipsDestroyed: 0 };
+        this.multiplayerState.player2Stats = { shotsGiven: 0, hits: 0, misses: 0, shipsDestroyed: 0 };
+        
+        this.showScreen('gameScreen');
+        
+        document.getElementById('enemyBoardSection').style.display = 'block';
+        document.getElementById('playerBoardSection').style.display = 'block';
+        document.getElementById('sosBoardSection').style.display = 'none';
+        document.getElementById('campaignInfo').classList.add('hidden');
+        document.getElementById('sosInfo').classList.add('hidden');
+        
+        this.renderMultiplayerBoards();
+        this.updateMultiplayerUI();
+        
+        alert(`🎮 ${this.multiplayerState.player1Name} começa!\n\nClique no tabuleiro inimigo para atirar.`);
+    }
+
+    renderMultiplayerBoards() {
+        const currentPlayer = this.multiplayerState.currentPlayer;
+        
+        // Renderizar tabuleiro do oponente (sem mostrar navios)
+        this.renderMultiplayerBoard('enemyBoard', currentPlayer === 1 ? 2 : 1, false);
+        
+        // Renderizar tabuleiro do jogador atual (mostrando navios)
+        this.renderMultiplayerBoard('playerBoard', currentPlayer, true);
+    }
+
+    renderMultiplayerBoard(boardId, player, showShips) {
+        const board = document.getElementById(boardId);
+        board.innerHTML = '';
+
+        const playerBoard = player === 1 ? this.multiplayerState.player1Board : this.multiplayerState.player2Board;
+        const playerShips = player === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
+        const isEnemyBoard = boardId === 'enemyBoard';
+
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'board-cell header';
+        board.appendChild(emptyCell);
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = String.fromCharCode(65 + i);
+            board.appendChild(cell);
+        }
+
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = row + 1;
+            board.appendChild(rowHeader);
+
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                // Verificar se a célula já foi atingida anteriormente
+                const cellValue = playerBoard[row][col];
+                
+                if (isEnemyBoard) {
+                    // No tabuleiro inimigo, mostrar histórico de jogadas
+                    if (cellValue === -1) {
+                        // Já foi atirado e errou
+                        cell.classList.add('miss');
+                        cell.textContent = '💧';
+                    } else if (cellValue === -2) {
+                        // Já foi atirado e acertou
+                        cell.classList.add('hit');
+                        cell.textContent = '💥';
+                    } else if (cellValue > 0) {
+                        // Verificar se o navio foi afundado
+                        const shipIndex = cellValue - 1;
+                        if (playerShips[shipIndex] && playerShips[shipIndex].hits === playerShips[shipIndex].size) {
+                            cell.classList.add('sunk');
+                            cell.textContent = '☠️';
+                        }
+                    }
+                    
+                    cell.addEventListener('click', () => this.multiplayerShoot(row, col));
+                } else {
+                    // No próprio tabuleiro, mostrar navios e histórico
+                    if (showShips && cellValue > 0 && cellValue !== -1 && cellValue !== -2) {
+                        cell.classList.add('ship');
+                    }
+                    
+                    if (cellValue === -1) {
+                        cell.classList.add('miss');
+                        cell.textContent = '💧';
+                    } else if (cellValue === -2) {
+                        cell.classList.add('hit');
+                        cell.textContent = '💥';
+                    }
+                    
+                    // Verificar se pertence a um navio afundado
+                    if (cellValue > 0 || cellValue === -2) {
+                        const originalValue = cellValue === -2 ? this.getOriginalShipValue(player, row, col) : cellValue;
+                        if (originalValue > 0) {
+                            const shipIndex = originalValue - 1;
+                            if (playerShips[shipIndex] && playerShips[shipIndex].hits === playerShips[shipIndex].size) {
+                                cell.classList.remove('hit');
+                                cell.classList.add('sunk');
+                                cell.textContent = '☠️';
+                            }
+                        }
+                    }
+                }
+
+                board.appendChild(cell);
+            }
+        }
+    }
+
+    getOriginalShipValue(player, row, col) {
+        const ships = player === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
+        
+        for (let i = 0; i < ships.length; i++) {
+            if (ships[i] && ships[i].positions) {
+                for (let pos of ships[i].positions) {
+                    if (pos[0] === row && pos[1] === col) {
+                        return i + 1;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
+
+    multiplayerShoot(row, col) {
+        if (this.gameState !== 'playing') return;
+
+        const currentPlayer = this.multiplayerState.currentPlayer;
+        const enemyPlayer = currentPlayer === 1 ? 2 : 1;
+        const enemyBoard = enemyPlayer === 1 ? this.multiplayerState.player1Board : this.multiplayerState.player2Board;
+        const enemyShips = enemyPlayer === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
+        const currentStats = currentPlayer === 1 ? this.multiplayerState.player1Stats : this.multiplayerState.player2Stats;
+
+        // Verificar se a célula já foi clicada
+        if (enemyBoard[row][col] === -1 || enemyBoard[row][col] === -2) {
+            return; // Já foi atirado aqui
+        }
+
+        currentStats.shotsGiven++;
+
+        if (enemyBoard[row][col] > 0) {
+            // Acertou!
+            currentStats.hits++;
+            
+            const shipIndex = enemyBoard[row][col] - 1;
+            enemyShips[shipIndex].hits++;
+
+            // Marcar como acertado no tabuleiro
+            enemyBoard[row][col] = -2;
+
+            // Atualizar visualmente
+            const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.classList.add('hit');
+                cell.textContent = '💥';
+            }
+
+            if (enemyShips[shipIndex].hits === enemyShips[shipIndex].size) {
+                // Afundou!
+                currentStats.shipsDestroyed++;
+                this.markMultiplayerShipAsSunk(enemyPlayer, shipIndex);
+
+                const playerName = currentPlayer === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
+                setTimeout(() => {
+                    alert(`🎉 ${playerName} afundou ${enemyShips[shipIndex].name}!`);
+                }, 100);
+
+                if (currentStats.shipsDestroyed === SHIPS.length) {
+                    this.endMultiplayerGame(currentPlayer);
+                    return;
+                }
+            }
+
+            this.updateMultiplayerUI();
+        } else {
+            // Errou
+            currentStats.misses++;
+            
+            // Marcar como errado no tabuleiro
+            enemyBoard[row][col] = -1;
+
+            // Atualizar visualmente
+            const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.classList.add('miss');
+                cell.textContent = '💧';
+            }
+
+            // Trocar turno
+            this.switchMultiplayerTurn();
+        }
+    }
+
+    markMultiplayerShipAsSunk(player, shipIndex) {
+        const ships = player === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
+        const currentPlayer = this.multiplayerState.currentPlayer;
+        const boardId = 'enemyBoard'; // Sempre marca no tabuleiro inimigo
+
+        ships[shipIndex].positions.forEach(([row, col]) => {
+            const cell = document.querySelector(`#${boardId} .board-cell[data-row="${row}"][data-col="${col}"]`);
+            if (cell) {
+                cell.classList.remove('hit');
+                cell.classList.add('sunk');
+                cell.textContent = '☠️';
+            }
+        });
+    }
+
+    switchMultiplayerTurn() {
+        const oldPlayer = this.multiplayerState.currentPlayer;
+        this.multiplayerState.currentPlayer = oldPlayer === 1 ? 2 : 1;
+        const newPlayer = this.multiplayerState.currentPlayer;
+        
+        const newPlayerName = newPlayer === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
+        const oldPlayerName = oldPlayer === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
+        
+        // Mostrar modal de troca de turno
+        const modal = document.getElementById('gameOverModal');
+        const title = document.getElementById('gameOverTitle');
+        const message = document.getElementById('gameOverMessage');
+        const buttons = document.getElementById('gameOverButtons');
+        
+        title.textContent = '🔄 TROCA DE TURNO';
+        message.innerHTML = `
+            <p style="font-size: 1.5rem; margin-bottom: 1rem;">🎮 ${newPlayerName}, é sua vez!</p>
+            <p style="color: var(--text-secondary);">⚠️ ${oldPlayerName}, por favor não olhe a tela!</p>
+            <p style="margin-top: 1.5rem; color: var(--explosion-yellow);">Clique em "Continuar" quando estiver pronto</p>
+        `;
+        
+        buttons.innerHTML = `
+            <button class="btn btn-primary" onclick="game.continueMultiplayerTurn()">➡️ Continuar</button>
+        `;
+        
+        modal.classList.add('active');
+    }
+
+    continueMultiplayerTurn() {
+        document.getElementById('gameOverModal').classList.remove('active');
+        this.renderMultiplayerBoards();
+        this.updateMultiplayerUI();
+    }
+
+    updateMultiplayerUI() {
+        const currentPlayer = this.multiplayerState.currentPlayer;
+        const player1Name = this.multiplayerState.player1Name;
+        const player2Name = this.multiplayerState.player2Name;
+        
+        const currentPlayerName = currentPlayer === 1 ? player1Name : player2Name;
+        const enemyPlayerName = currentPlayer === 1 ? player2Name : player1Name;
+        
+        const currentStats = currentPlayer === 1 ? this.multiplayerState.player1Stats : this.multiplayerState.player2Stats;
+        const enemyStats = currentPlayer === 1 ? this.multiplayerState.player2Stats : this.multiplayerState.player1Stats;
+        
+        const currentShips = currentPlayer === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
+        const enemyShips = currentPlayer === 1 ? this.multiplayerState.player2Ships : this.multiplayerState.player1Ships;
+        
+        // Atualizar nomes
+        document.getElementById('playerNameDisplay').textContent = currentPlayerName;
+        document.getElementById('enemyNameDisplay').textContent = enemyPlayerName;
+        
+        // Atualizar navios restantes
+        const playerShipsLeft = currentShips.filter(s => s && s.hits < s.size).length;
+        const enemyShipsLeft = enemyShips.filter(s => s && s.hits < s.size).length;
+        
+        document.getElementById('playerShipsLeft').textContent = playerShipsLeft;
+        document.getElementById('aiShipsLeft').textContent = enemyShipsLeft;
+        
+        // Atualizar precisão
+        const playerAccuracy = currentStats.shotsGiven > 0 
+            ? ((currentStats.hits / currentStats.shotsGiven) * 100).toFixed(1)
+            : 0;
+        const enemyAccuracy = enemyStats.shotsGiven > 0
+            ? ((enemyStats.hits / enemyStats.shotsGiven) * 100).toFixed(1)
+            : 0;
+        
+        document.getElementById('playerAccuracy').textContent = playerAccuracy + '%';
+        document.getElementById('aiAccuracy').textContent = enemyAccuracy + '%';
+        
+        // Atualizar estatísticas
+        document.getElementById('shotsCount').textContent = currentStats.shotsGiven;
+        document.getElementById('hitsCount').textContent = currentStats.hits;
+        document.getElementById('missCount').textContent = currentStats.misses;
+        document.getElementById('shipsDestroyed').textContent = currentStats.shipsDestroyed;
+        
+        // Atualizar indicador de turno
+        document.getElementById('turnIndicator').textContent = `🎯 ${currentPlayerName}`;
+    }
+
+    endMultiplayerGame(winner) {
+        this.gameState = 'gameOver';
+        
+        const modal = document.getElementById('gameOverModal');
+        const title = document.getElementById('gameOverTitle');
+        const message = document.getElementById('gameOverMessage');
+        const buttons = document.getElementById('gameOverButtons');
+        
+        const winnerName = winner === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
+        const loserName = winner === 1 ? this.multiplayerState.player2Name : this.multiplayerState.player1Name;
+        const winnerStats = winner === 1 ? this.multiplayerState.player1Stats : this.multiplayerState.player2Stats;
+        
+        const accuracy = winnerStats.shotsGiven > 0 
+            ? ((winnerStats.hits / winnerStats.shotsGiven) * 100).toFixed(1)
+            : 0;
+        
+        title.textContent = '🏆 VITÓRIA!';
+        message.innerHTML = `
+            <p style="font-size: 1.8rem; margin-bottom: 1rem;">🎉 ${winnerName} VENCEU!</p>
+            <p style="color: var(--text-secondary); margin-bottom: 2rem;">${loserName} foi derrotado!</p>
+            <p style="margin-top: 1.5rem;">📊 Estatísticas de ${winnerName}:</p>
+            <p>🎯 Tiros: ${winnerStats.shotsGiven} | Acertos: ${winnerStats.hits}</p>
+            <p>📈 Precisão: ${accuracy}%</p>
+            <p>💥 Navios Afundados: ${winnerStats.shipsDestroyed}</p>
+        `;
+        
+        buttons.innerHTML = `
+            <button class="btn btn-primary" onclick="game.closeModalAndAction(() => game.startGame('multiplayer'))">🔄 Jogar Novamente</button>
+            <button class="btn btn-secondary" onclick="game.returnToMenu()">🏠 Menu Principal</button>
+        `;
+        
+        modal.classList.add('active');
+    }
+    // ========== FIM MULTIPLAYER ==========
 
     resetGame() {
         this.playerBoard = this.createEmptyBoard();
@@ -273,6 +734,7 @@ class BattleshipGame {
         board.innerHTML = '';
         board.style.gridTemplateColumns = `repeat(${this.sosBoardSize + 1}, 1fr)`;
         board.style.gridTemplateRows = `repeat(${this.sosBoardSize + 1}, 1fr)`;
+        
 
         const emptyCell = document.createElement('div');
         emptyCell.className = 'board-cell header';
@@ -296,8 +758,6 @@ class BattleshipGame {
                 cell.className = 'board-cell';
                 cell.dataset.row = row;
                 cell.dataset.col = col;
-                
-                // CORREÇÃO: Não mostrar sobreviventes visualmente (removido completamente)
                 
                 cell.addEventListener('click', () => this.handleSOSClick(row, col));
                 board.appendChild(cell);
@@ -427,7 +887,6 @@ class BattleshipGame {
             `;
         }
         
-        // CORREÇÃO: Botões agora fecham o modal corretamente antes de navegar
         buttons.innerHTML = `
             <button class="btn btn-primary" onclick="game.closeModalAndAction(() => game.startSOSMission('${this.sosMission}'))">🔄 Tentar Novamente</button>
             <button class="btn btn-secondary" onclick="game.closeModalAndAction(() => game.startGame('sos'))">📋 Escolher Outra Missão</button>
@@ -437,10 +896,8 @@ class BattleshipGame {
         modal.classList.add('active');
     }
 
-    // CORREÇÃO: Novo método para fechar modal e executar ação
     closeModalAndAction(callback) {
         document.getElementById('gameOverModal').classList.remove('active');
-        // Pequeno delay para garantir que o modal fechou antes de executar a ação
         setTimeout(() => {
             callback();
         }, 100);
@@ -461,7 +918,13 @@ class BattleshipGame {
         document.getElementById('placementScreen').style.display = 'none';
         document.getElementById('gameScreen').style.display = 'none';
         document.getElementById(screenId).style.display = 'block';
+
+        window.scrollTo({ top: 0, behavior: 'instant' });
+
     }
+    
+
+    
 
     initPlacementBoard() {
         const board = document.getElementById('placementBoard');
@@ -674,20 +1137,6 @@ class BattleshipGame {
         this.updatePlacementBoard();
         this.renderShipsToPlace();
         this.checkPlacementComplete();
-    }
-
-    confirmPlacement() {
-        this.aiPlaceShips();
-        this.gameState = 'playing';
-        this.showScreen('gameScreen');
-        
-        document.getElementById('enemyBoardSection').style.display = 'block';
-        document.getElementById('playerBoardSection').style.display = 'block';
-        document.getElementById('sosBoardSection').style.display = 'none';
-        
-        this.initGameBoards();
-        this.updateGameInfo();
-        this.updateModeUI();
     }
 
     aiPlaceShips() {
@@ -1155,6 +1604,8 @@ class BattleshipGame {
         if (this.gameMode === 'campaign') {
             this.campaignLevel = 1;
         }
+
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 }
 
