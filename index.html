@@ -8,6 +8,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-anchor">⚓</div>
+            <h1 class="splash-title">BATALHA NAVAL</h1>
+            <div class="radar-container">
+                <div class="radar">
+                    <div class="radar-sweep"></div>
+                    <div class="radar-dot"></div>
+                </div>
+            </div>
+            <p class="splash-subtitle">Preparaino e Radar...</p>
+            <p class="splash-message">Prepare-se para a batalla!</p>
+        </div>
+    </div>
+
     <header>
         <h1>⚓ BATALHA NAVAL ⚓</h1>
         <p class="subtitle">Afunde a Frota Inimiga!</p>
@@ -27,7 +43,7 @@
                 <button class="btn btn-primary" onclick="game.startGame('campaign')">
                     🏆 Modo Campanha (10 Níveis)
                 </button>
-                <button class="btn" onclick="game.startGame('multiplayer')" disabled title="Em desenvolvimento">
+                <button class="btn btn-primary" onclick="game.startGame('multiplayer')">
                     👥 Multiplayer Local
                 </button>
                 <button class="btn" onclick="game.showSettings()">
