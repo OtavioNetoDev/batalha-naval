@@ -156,7 +156,6 @@ class BattleshipGame {
 
     startGame(mode) {
         this.gameMode = mode;
-        window.scrollTo({ top: 0, behavior: 'instant' });
         
         if (mode === 'sos') {
             this.showScreen('sosMissionScreen');
@@ -232,14 +231,6 @@ class BattleshipGame {
     }
 
     confirmPlacement() {
-        const requiredShips = this.gameMode === 'sos' ? 3 : SHIPS.length;
-        const shipsPlaced = this.playerShips.filter(s => s).length;
-    
-        if (shipsPlaced < requiredShips) {
-            alert(`⚠️ Você precisa posicionar todos os ${requiredShips} navios antes de continuar!\n\nNavios posicionados: ${shipsPlaced}/${requiredShips}`);
-            return; // Bloqueia a continuação
-        }
-
         if (this.gameMode === 'multiplayer') {
             if (this.multiplayerState.placementPhase === 1) {
                 // Jogador 1 terminou, salvar navios
@@ -302,7 +293,12 @@ class BattleshipGame {
         this.renderMultiplayerBoards();
         this.updateMultiplayerUI();
         
-        alert(`🎮 ${this.multiplayerState.player1Name} começa!\n\nClique no tabuleiro inimigo para atirar.`);
+        // FORÇAR esconder tabuleiro próprio imediatamente
+        const playerBoard = document.getElementById('playerBoardSection');
+        playerBoard.classList.add('multiplayer-hidden');
+        playerBoard.style.display = 'none';
+        
+        alert(`🎯 COMEÇA: ${this.multiplayerState.player1Name.toUpperCase()}!\n\n▶️ Clique no tabuleiro inimigo para atirar\n\n📋 Seu tabuleiro está escondido para manter o jogo justo!`);
     }
 
     renderMultiplayerBoards() {
@@ -313,6 +309,11 @@ class BattleshipGame {
         
         // Renderizar tabuleiro do jogador atual (mostrando navios)
         this.renderMultiplayerBoard('playerBoard', currentPlayer, true);
+        
+        // GARANTIR que o tabuleiro próprio fique escondido
+        setTimeout(() => {
+            document.getElementById('playerBoardSection').classList.add('multiplayer-hidden');
+        }, 10);
     }
 
     renderMultiplayerBoard(boardId, player, showShips) {
@@ -354,7 +355,7 @@ class BattleshipGame {
                     if (cellValue === -1) {
                         // Já foi atirado e errou
                         cell.classList.add('miss');
-                        cell.textContent = '💧';
+                        // Textura de água aplicada via CSS
                     } else if (cellValue === -2) {
                         // Já foi atirado e acertou
                         cell.classList.add('hit');
@@ -377,7 +378,7 @@ class BattleshipGame {
                     
                     if (cellValue === -1) {
                         cell.classList.add('miss');
-                        cell.textContent = '💧';
+                        // Textura de água aplicada via CSS
                     } else if (cellValue === -2) {
                         cell.classList.add('hit');
                         cell.textContent = '💥';
@@ -478,7 +479,7 @@ class BattleshipGame {
             const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
             if (cell) {
                 cell.classList.add('miss');
-                cell.textContent = '💧';
+                // Textura de água aplicada via CSS
             }
 
             // Trocar turno
@@ -517,9 +518,16 @@ class BattleshipGame {
         
         title.textContent = '🔄 TROCA DE TURNO';
         message.innerHTML = `
-            <p style="font-size: 1.5rem; margin-bottom: 1rem;">🎮 ${newPlayerName}, é sua vez!</p>
-            <p style="color: var(--text-secondary);">⚠️ ${oldPlayerName}, por favor não olhe a tela!</p>
-            <p style="margin-top: 1.5rem; color: var(--explosion-yellow);">Clique em "Continuar" quando estiver pronto</p>
+            <p style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--explosion-yellow); font-weight: 700;">
+                🎯 AGORA É A VEZ DE:<br>
+                ${newPlayerName.toUpperCase()}!
+            </p>
+            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                ⚠️ ${oldPlayerName}, não olhe a tela!
+            </p>
+            <p style="margin-top: 1.5rem; color: var(--water-foam); font-size: 1.1rem;">
+                Clique em "Continuar" quando ${newPlayerName} estiver pronto
+            </p>
         `;
         
         buttons.innerHTML = `
@@ -531,8 +539,15 @@ class BattleshipGame {
 
     continueMultiplayerTurn() {
         document.getElementById('gameOverModal').classList.remove('active');
+        
+        // Renderizar tabuleiros
         this.renderMultiplayerBoards();
         this.updateMultiplayerUI();
+        
+        // FORÇAR esconder tabuleiro próprio
+        const playerBoard = document.getElementById('playerBoardSection');
+        playerBoard.classList.add('multiplayer-hidden');
+        playerBoard.style.display = 'none';
     }
 
     updateMultiplayerUI() {
@@ -577,8 +592,10 @@ class BattleshipGame {
         document.getElementById('missCount').textContent = currentStats.misses;
         document.getElementById('shipsDestroyed').textContent = currentStats.shipsDestroyed;
         
-        // Atualizar indicador de turno
-        document.getElementById('turnIndicator').textContent = `🎯 ${currentPlayerName}`;
+        // Atualizar indicador de turno com destaque maior
+        const turnIndicator = document.getElementById('turnIndicator');
+        turnIndicator.textContent = `🎯 VEZ DE: ${currentPlayerName.toUpperCase()}!`;
+        turnIndicator.classList.add('multiplayer-turn');
     }
 
     endMultiplayerGame(winner) {
@@ -734,7 +751,6 @@ class BattleshipGame {
         board.innerHTML = '';
         board.style.gridTemplateColumns = `repeat(${this.sosBoardSize + 1}, 1fr)`;
         board.style.gridTemplateRows = `repeat(${this.sosBoardSize + 1}, 1fr)`;
-        
 
         const emptyCell = document.createElement('div');
         emptyCell.className = 'board-cell header';
@@ -786,7 +802,7 @@ class BattleshipGame {
             survivor.rescued = true;
             this.sosRescued++;
             cell.classList.add('rescued');
-            cell.textContent = '🚁';
+            // A imagem do sobrevivente é aplicada via CSS
             
             this.playSound('rescue');
             
@@ -808,7 +824,7 @@ class BattleshipGame {
                 this.playSound('penalty');
             } else {
                 cell.classList.add('miss');
-                cell.textContent = '💧';
+                // Textura de água aplicada via CSS
             }
         }
         
@@ -918,13 +934,7 @@ class BattleshipGame {
         document.getElementById('placementScreen').style.display = 'none';
         document.getElementById('gameScreen').style.display = 'none';
         document.getElementById(screenId).style.display = 'block';
-
-        window.scrollTo({ top: 0, behavior: 'instant' });
-
     }
-    
-
-    
 
     initPlacementBoard() {
         const board = document.getElementById('placementBoard');
@@ -953,9 +963,58 @@ class BattleshipGame {
                 cell.dataset.row = row;
                 cell.dataset.col = col;
                 cell.addEventListener('click', () => this.placeShipAt(row, col));
+                
+                // Adicionar prévia ao passar o mouse
+                cell.addEventListener('mouseenter', () => this.showPlacementPreview(row, col));
+                cell.addEventListener('mouseleave', () => this.clearPlacementPreview());
+                
                 board.appendChild(cell);
             }
         }
+    }
+
+    showPlacementPreview(row, col) {
+        if (this.currentShipIndex === null) return;
+        
+        const shipsToUse = this.gameMode === 'sos' ? SHIPS.slice(0, 3) : SHIPS;
+        const ship = shipsToUse[this.currentShipIndex];
+        
+        if (!ship || this.playerShips[this.currentShipIndex]) return;
+        
+        const positions = [];
+        let isValid = true;
+        
+        // Calcular posições da prévia
+        for (let i = 0; i < ship.size; i++) {
+            const newRow = this.shipOrientation === 'horizontal' ? row : row + i;
+            const newCol = this.shipOrientation === 'horizontal' ? col + i : col;
+            
+            if (newRow >= BOARD_SIZE || newCol >= BOARD_SIZE || this.playerBoard[newRow][newCol] !== 0) {
+                isValid = false;
+                positions.push([newRow, newCol]);
+                continue;
+            }
+            
+            positions.push([newRow, newCol]);
+        }
+        
+        // Aplicar classes de prévia
+        positions.forEach(([r, c]) => {
+            if (r < BOARD_SIZE && c < BOARD_SIZE) {
+                const cell = document.querySelector(`#placementBoard .board-cell[data-row="${r}"][data-col="${c}"]`);
+                if (cell) {
+                    cell.classList.add(isValid ? 'ship-preview' : 'ship-preview-invalid');
+                }
+            }
+        });
+    }
+
+    clearPlacementPreview() {
+        const board = document.getElementById('placementBoard');
+        const previewCells = board.querySelectorAll('.ship-preview, .ship-preview-invalid');
+        previewCells.forEach(cell => {
+            cell.classList.remove('ship-preview', 'ship-preview-invalid');
+        });
     }
 
     renderShipsToPlace() {
@@ -1291,7 +1350,7 @@ class BattleshipGame {
         } else {
             this.stats.misses++;
             cell.classList.add('miss');
-            cell.textContent = '💧';
+            // Textura de água aplicada via CSS
             this.isPlayerTurn = false;
             this.updateGameInfo();
             
@@ -1440,7 +1499,7 @@ class BattleshipGame {
         } else {
             this.aiStats.misses++;
             cell.classList.add('miss');
-            cell.textContent = '💧';
+            // Textura de água aplicada via CSS
             this.isPlayerTurn = true;
             this.updateGameInfo();
         }
@@ -1599,13 +1658,17 @@ class BattleshipGame {
 
     returnToMenu() {
         document.getElementById('gameOverModal').classList.remove('active');
+        
+        // Restaurar tabuleiro próprio
+        const playerBoard = document.getElementById('playerBoardSection');
+        playerBoard.classList.remove('multiplayer-hidden');
+        playerBoard.style.display = 'block';
+        
         this.showScreen('menuScreen');
         this.gameState = 'menu';
         if (this.gameMode === 'campaign') {
             this.campaignLevel = 1;
         }
-
-        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 }
 
