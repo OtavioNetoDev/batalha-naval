@@ -318,6 +318,9 @@ h1 {
     max-width: 1600px;
     margin: 0 auto;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Menu inicial */
@@ -327,6 +330,7 @@ h1 {
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 200px);
+    width: 100%;
     gap: 2rem;
 }
 
@@ -568,15 +572,20 @@ body.light-theme .setting-group input {
 /* Tela de Seleção de Missão SOS */
 .sos-mission-screen {
     display: none;
+    flex-direction: column;
+    align-items: center;
     padding: 2rem 0;
+    width: 100%;
+    min-height: calc(100vh - 200px);
 }
 
 .mission-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin: 2rem auto;
     max-width: 1200px;
+    width: 100%;
 }
 
 .mission-card {
@@ -731,6 +740,7 @@ body.light-theme .setting-group input {
 /* Área de jogo */
 .game-screen {
     display: none;
+    width: 100%;
 }
 
 .game-info {
@@ -918,6 +928,7 @@ body.light-theme .setting-group input {
 /* Área de posicionamento */
 .placement-screen {
     display: none;
+    width: 100%;
 }
 
 /* Prévia de posicionamento de navios */
