@@ -933,7 +933,13 @@ class BattleshipGame {
         document.getElementById('sosMissionScreen').style.display = 'none';
         document.getElementById('placementScreen').style.display = 'none';
         document.getElementById('gameScreen').style.display = 'none';
-        document.getElementById(screenId).style.display = 'block';
+
+        const screen = document.getElementById(screenId);
+        if (screenId === 'menuScreen' || screenId === 'sosMissionScreen') {
+            screen.style.display = 'flex';
+        } else {
+            screen.style.display = 'block';
+        }
     }
 
     initPlacementBoard() {
