@@ -318,6 +318,9 @@ h1 {
     max-width: 1600px;
     margin: 0 auto;
     padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 /* Menu inicial */
@@ -327,6 +330,7 @@ h1 {
     align-items: center;
     justify-content: center;
     min-height: calc(100vh - 200px);
+    width: 100%;
     gap: 2rem;
 }
 
@@ -460,7 +464,7 @@ body.light-theme .setting-group input {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
 }
 
 .campaign-label {
@@ -470,7 +474,7 @@ body.light-theme .setting-group input {
 
 .campaign-value {
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     color: var(--explosion-yellow);
 }
 
@@ -521,20 +525,20 @@ body.light-theme .setting-group input {
 
 .sos-label {
     font-weight: 600;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: var(--text-secondary);
 }
 
 .sos-text,
 .sos-value {
     font-weight: 700;
-    font-size: 1.4rem;
+    font-size: 1.7rem;
     color: var(--success-green);
 }
 
 .sos-timer-value {
     font-weight: 700;
-    font-size: 1.8rem;
+    font-size: 2.2rem;
     color: var(--explosion-yellow);
     font-family: 'Press Start 2P', monospace;
 }
@@ -568,15 +572,20 @@ body.light-theme .setting-group input {
 /* Tela de Seleção de Missão SOS */
 .sos-mission-screen {
     display: none;
+    flex-direction: column;
+    align-items: center;
     padding: 2rem 0;
+    width: 100%;
+    min-height: calc(100vh - 200px);
 }
 
 .mission-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin: 2rem auto;
     max-width: 1200px;
+    width: 100%;
 }
 
 .mission-card {
@@ -638,7 +647,7 @@ body.light-theme .setting-group input {
     margin: 0.5rem 0;
     background: var(--cell-bg);
     border-radius: 6px;
-    font-size: 1.1rem;
+    font-size: 1.25rem;
     border-left: 3px solid var(--water-foam);
 }
 
@@ -731,6 +740,7 @@ body.light-theme .setting-group input {
 /* Área de jogo */
 .game-screen {
     display: none;
+    width: 100%;
 }
 
 .game-info {
@@ -753,20 +763,20 @@ body.light-theme .setting-group input {
 }
 
 .player-name {
-    font-size: 1.5rem;
+    font-size: 2.8rem; 
     font-weight: 700;
     color: var(--explosion-yellow);
 }
 
 .player-stats {
-    font-size: 1.1rem;
+    font-size: 2rem;
     color: var(--text-secondary);
 }
 
 .turn-indicator {
-    font-size: 1.8rem;
+    font-size: 2.8rem;     
     font-weight: 700;
-    padding: 1rem 2rem;
+    padding: 1.2rem 2.5rem;
     background: linear-gradient(135deg, var(--fire-orange), var(--fire-red));
     border-radius: 8px;
     animation: pulse 2s ease-in-out infinite;
@@ -793,7 +803,7 @@ body.light-theme .setting-group input {
 }
 
 .board-title {
-    font-size: 1.5rem;
+    font-size: 2rem;
     font-weight: 700;
     margin-bottom: 1rem;
     text-align: center;
@@ -823,8 +833,8 @@ body.light-theme .setting-group input {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 1.2rem;
+    font-weight: 700;
     cursor: url('../assets/cursors/crosshair.svg') 16 16, crosshair;
     transition: all 0.3s ease;
     position: relative;
@@ -848,10 +858,35 @@ body.light-theme .setting-group input {
 }
 
 .board-cell.header {
-    background: var(--header-bg);
+    background: rgba(10, 22, 40, 0.95);
     cursor: default;
-    font-weight: 700;
-    color: var(--text-secondary);
+    font-weight: 900;
+    
+    /* AUMENTO MÁXIMO */
+    font-size: 2.8rem; /* Ajuste esse valor conforme o tamanho da sua célula */
+    line-height: 1;    /* Remove espaços extras no topo e fundo da letra */
+    
+    color: #ffffff;
+    text-shadow:
+        0 0 12px rgba(74, 158, 255, 0.9), /* Brilho mais intenso */
+        0 0 4px rgba(255, 255, 255, 0.8);
+    
+    letter-spacing: 1px;
+    border: 1px solid rgba(74, 158, 255, 0.8); /* Borda mais visível */
+
+    /* Centralização total para o texto não 'vazar' */
+    display: flex;
+    align-items: center; 
+    justify-content: center;
+    overflow: hidden; /* Garante que nada saia da célula */
+}
+
+body.light-theme .board-cell.header {
+    background: rgba(25, 118, 210, 0.15);
+    color: #0d47a1;
+    text-shadow:
+        0 0 4px rgba(25, 118, 210, 0.5);
+    border: 1px solid rgba(25, 118, 210, 0.4);
 }
 
 .board-cell.ship {
@@ -918,6 +953,7 @@ body.light-theme .setting-group input {
 /* Área de posicionamento */
 .placement-screen {
     display: none;
+    width: 100%;
 }
 
 /* Prévia de posicionamento de navios */
@@ -980,7 +1016,7 @@ body.light-theme .setting-group input {
 }
 
 .ship-name {
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     font-weight: 600;
     text-align: center;
     color: var(--text-secondary);
@@ -1018,14 +1054,14 @@ body.light-theme .setting-group input {
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 2.4rem;
     font-weight: 700;
     color: var(--explosion-yellow);
     margin-bottom: 0.5rem;
 }
 
 .stat-label {
-    font-size: 1rem;
+    font-size: 1.2rem;
     color: var(--text-secondary);
 }
 
@@ -1072,14 +1108,14 @@ body.light-theme .setting-group input {
 }
 
 .modal-title {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
     margin-bottom: 1rem;
     color: var(--explosion-yellow);
 }
 
 .modal-message {
-    font-size: 1.3rem;
+    font-size: 1.6rem;
     margin-bottom: 2rem;
     color: var(--text-secondary);
 }
