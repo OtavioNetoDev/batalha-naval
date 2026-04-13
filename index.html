@@ -46,6 +46,9 @@
                 <button class="btn btn-primary" onclick="game.startGame('multiplayer')">
                     👥 Multiplayer Local
                 </button>
+                <button class="btn btn-special" onclick="game.showCartesianMenu()">
+                📐 Modo Plano Cartesiano (Educacional)
+                </button>
                 <button class="btn" onclick="game.showSettings()">
                     ⚙️ Configurações
                 </button>
@@ -89,7 +92,46 @@
                 <button class="btn btn-primary" onclick="game.hideSettings()">Salvar e Fechar</button>
             </div>
         </div>
+        
+                <!-- NOVA TELA: Menu Plano Cartesiano -->
+        <div id="cartesianMenuScreen" class="sos-mission-screen">
+            <h2 class="text-center mb-2">📐 MODO PLANO CARTESIANO</h2>
+            <p class="text-center mb-2 subtitle-text">
+                Aprenda coordenadas X e Y enquanto joga Batalha Naval!<br>
+                Eixo X (horizontal) e Eixo Y (vertical) de -5 a 5
+            </p>
 
+            <div class="mission-cards">
+                <div class="mission-card" onclick="game.startGame('cartesian-classic')">
+                    <div class="mission-icon">🎯</div>
+                    <div class="mission-title">CLÁSSICO VS IA</div>
+                    <div class="mission-details">
+                        <div class="detail-row">📐 Tabuleiro: Plano Cartesiano</div>
+                        <div class="detail-row">🎯 Eixos: X e Y (-5 a 5)</div>
+                        <div class="detail-row">🤖 Contra: Inteligência Artificial</div>
+                        <div class="detail-row">📚 Ideal para: Prática individual</div>
+                    </div>
+                    <button class="btn btn-primary">Jogar vs IA</button>
+                </div>
+
+                <div class="mission-card" onclick="game.startGame('cartesian-multiplayer')">
+                    <div class="mission-icon">👥</div>
+                    <div class="mission-title">MULTIPLAYER LOCAL</div>
+                    <div class="mission-details">
+                        <div class="detail-row">📐 Tabuleiro: Plano Cartesiano</div>
+                        <div class="detail-row">🎯 Eixos: X e Y (-5 a 5)</div>
+                        <div class="detail-row">👥 Contra: Outro Jogador</div>
+                        <div class="detail-row">🏫 Ideal para: Competição em sala</div>
+                    </div>
+                    <button class="btn btn-primary">Jogar 2 Jogadores</button>
+                </div>
+            </div>
+
+            <div class="text-center" style="margin-top: 2rem;">
+                <button class="btn btn-secondary" onclick="game.returnToMenu()">🏠 Voltar ao Menu</button>
+            </div>
+        </div>
+        
         <!-- Tela de Seleção de Missão SOS -->
         <div id="sosMissionScreen" class="sos-mission-screen">
             <h2 class="text-center mb-2">🆘 MODO RESGATE - ESCOLHA SUA MISSÃO</h2>
