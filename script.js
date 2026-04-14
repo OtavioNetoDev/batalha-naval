@@ -124,10 +124,10 @@ class BattleshipGame {
     }
     initSounds() {
         this._soundFiles = {
-            click:     'assets/ClickSound.wav',
-            hit:       'assets/HitSound.wav',
-            explosion: 'assets/ExplosionShipSound.wav',
-            miss:      'assets/MissSound.wav'
+            click:     'assets/sounds/ClickSound.wav',
+            hit:       'assets/sounds/HitSound.wav',
+            explosion: 'assets/sounds/ExplosionShipSound.wav',
+            miss:      'assets/sounds/MissSound.wav'
         };
         this._soundCache = {};
         this._audioReady = false;
