@@ -1,3 +1,5 @@
+CODIGO PROVISORIO BATLHA NAVAL
+
 // Constantes do jogo
 const BOARD_SIZE = 10;
 const SHIPS = [
@@ -52,7 +54,7 @@ class BattleshipGame {
         this.sosSurvivors = [];
         this.sosBoardSize = 10;
         this.cartesianMode = false;
-        this.cartesianBoardSize = 11; // NOVO: Tamanho do tabuleiro cartesiano
+        this.cartesianBoardSize = 11;
         
         // Multiplayer
         this.multiplayerState = {
@@ -71,13 +73,11 @@ class BattleshipGame {
         this.loadSettings();
         this.loadStats();
         this.applyTheme();
-        this.initSounds();
     }
 
-    // adicionando plano carteesiano //
     showCartesianMenu() {
-    this.showScreen('cartesianMenuScreen');
-}
+        this.showScreen('cartesianMenuScreen');
+    }
 
     loadSettings() {
         const saved = localStorage.getItem('battleship_settings');
@@ -122,56 +122,6 @@ class BattleshipGame {
             };
         }
     }
-    initSounds() {
-        this._soundFiles = {
-            click:     'assets/ClickSound.wav',
-            hit:       'assets/HitSound.wav',
-            explosion: 'assets/ExplosionShipSound.wav',
-            miss:      'assets/MissSound.wav'
-        };
-        this._soundCache = {};
-        this._audioReady = false;
-
-        // Desbloqueia autoplay no primeiro gesto do usuario
-        const unlock = () => {
-            if (this._audioReady) return;
-            this._audioReady = true;
-            document.removeEventListener('click',      unlock);
-            document.removeEventListener('touchstart', unlock);
-            // Pre-carrega todos os sons apos desbloqueio
-            Object.keys(this._soundFiles).forEach(name => {
-                const a = new Audio(this._soundFiles[name]);
-                a.volume = 0.5;
-                a.load();
-                this._soundCache[name] = a;
-            });
-        };
-        document.addEventListener('click',      unlock);
-        document.addEventListener('touchstart', unlock);
-
-        // Listener global: clique em qualquer .btn fora do tabuleiro toca click
-        document.addEventListener('click', (e) => {
-            const btn = e.target.closest('.btn, .ship-item, .mission-card');
-            if (btn && !e.target.closest('.board')) {
-                this.playSound('click');
-            }
-        });
-    }
-
-    playSound(soundName) {
-        if (!this.settings.soundEnabled) return;
-        if (!this._audioReady) return;
-        const original = this._soundCache[soundName];
-        if (!original) return;
-        // Clona para permitir sobreposicao rapida (ex: vários hits seguidos)
-        const clone = original.cloneNode();
-        clone.volume = 0.5;
-        clone.play().catch(() => {
-            original.currentTime = 0;
-            original.play().catch(() => {});
-        });
-    }
-
 
     saveStats() {
         localStorage.setItem('battleship_stats', JSON.stringify(this.globalStats));
@@ -259,17 +209,226 @@ class BattleshipGame {
     this.showScreen('placementScreen');
     
     setTimeout(() => {
-        // Desabilitar botão imediatamente antes de qualquer coisa
-        const confirmBtn = document.getElementById('confirmBtn');
-        if (confirmBtn) { confirmBtn.disabled = true; }
-
         this.initPlacementBoard();
         this.renderShipsToPlace();
-        this.checkPlacementComplete();
     }, 100);
 }
  
-// ========== MULTIPLAYER ==========
+// MODIFICAR O MÉTODO initPlacementBoard para suportar coordenadas cartesianas:
+ 
+initPlacementBoard() {
+    const board = document.getElementById('placementBoard');
+    if (!board) return;
+    
+    board.innerHTML = '';
+    board.style.display = 'grid';
+    
+    if (this.cartesianMode) {
+        // Modo Cartesiano: 11x11 (de -5 a 5)
+        const gridSize = 11;
+        board.style.gridTemplateColumns = `repeat(${gridSize + 1}, 1fr)`;
+        board.style.gridTemplateRows = `repeat(${gridSize + 1}, 1fr)`;
+        
+        // Célula X/Y no canto superior esquerdo
+        const xyCell = document.createElement('div');
+        xyCell.className = 'board-cell header cartesian-origin';
+        xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:100%;height:1px;background:white;transform:rotate(-45deg);"></div><span style="position:absolute;top:5%;left:70%;font-size:0.7rem;font-weight:bold;">X</span><span style="position:absolute;bottom:5%;left:10%;font-size:0.7rem;font-weight:bold;">Y</span></div>';
+        board.appendChild(xyCell);
+        
+        // Cabeçalho X (de -5 a 5)
+        for (let x = -5; x <= 5; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = x;
+            cell.style.fontWeight = 'bold';
+            if (x === 0) cell.style.color = '#ff6b6b';
+            board.appendChild(cell);
+        }
+        
+        // Linhas do tabuleiro
+        for (let y = 5; y >= -5; y--) { // Y de cima para baixo (5 até -5)
+            // Cabeçalho Y
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = y;
+            rowHeader.style.fontWeight = 'bold';
+            if (y === 0) rowHeader.style.color = '#ff6b6b';
+            board.appendChild(rowHeader);
+            
+            // Células do tabuleiro
+            for (let x = -5; x <= 5; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                
+                // Converte coordenadas cartesianas para índices de array (0-10)
+                const arrayRow = 5 - y; // Y invertido
+                const arrayCol = x + 5;
+                
+                cell.dataset['row'] = arrayRow.toString();
+                cell.dataset['col'] = arrayCol.toString();
+                cell.dataset['cartX'] = x.toString();
+                cell.dataset['cartY'] = y.toString();
+                
+                // Destaca eixos
+                if (x === 0 || y === 0) {
+                    cell.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+                    cell.style.borderColor = '#ff6b6b';
+                }
+                
+                cell.onclick = () => this.placeShipAt(arrayRow, arrayCol);
+                board.appendChild(cell);
+            }
+        }
+    } else {
+        // Modo Normal (A-J, 1-10)
+        board.style.gridTemplateColumns = `repeat(${this.cartesianMode ? this.cartesianBoardSize + 1 : BOARD_SIZE + 1}, 1fr)`;
+        board.style.gridTemplateRows = `repeat(${this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE + 1}, 1fr)`;
+        
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'board-cell header';
+        board.appendChild(emptyCell);
+        
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = String.fromCharCode(65 + i);
+            board.appendChild(cell);
+        }
+        
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = (row + 1).toString();
+            board.appendChild(rowHeader);
+            
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                cell.dataset['row'] = row.toString();
+                cell.dataset['col'] = col.toString();
+                cell.onclick = () => this.placeShipAt(row, col);
+                board.appendChild(cell);
+            }
+        }
+    }
+}
+ 
+// MODIFICAR O MÉTODO initGameBoards para suportar coordenadas cartesianas:
+ 
+initGameBoards() {
+    this.renderBoard('enemyBoard', 'enemy');
+    this.renderBoard('playerBoard', 'player');
+}
+ 
+renderBoard(boardId, type) {
+    const board = document.getElementById(boardId);
+    if (!board) return;
+    
+    board.innerHTML = '';
+    board.style.display = 'grid';
+    
+        
+    if (this.cartesianMode) {
+        // Renderização Cartesiana
+        const gridSize = 11;
+        board.style.gridTemplateColumns = `repeat(${gridSize + 1}, 1fr)`;
+        board.style.gridTemplateRows = `repeat(${gridSize + 1}, 1fr)`;
+        
+        // Célula X/Y
+        const xyCell = document.createElement('div');
+        xyCell.className = 'board-cell header cartesian-origin';
+        xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:100%;height:1px;background:white;transform:rotate(-45deg);"></div><span style="position:absolute;top:5%;left:70%;font-size:0.7rem;font-weight:bold;">X</span><span style="position:absolute;bottom:5%;left:10%;font-size:0.7rem;font-weight:bold;">Y</span></div>';
+        board.appendChild(xyCell);
+        
+        // Eixo X
+        for (let x = -5; x <= 5; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = x;
+            if (x === 0) cell.style.color = '#ff6b6b';
+            board.appendChild(cell);
+        }
+        
+        // Linhas
+        for (let y = 5; y >= -5; y--) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = y;
+            if (y === 0) rowHeader.style.color = '#ff6b6b';
+            board.appendChild(rowHeader);
+            
+            for (let x = -5; x <= 5; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                
+                const arrayRow = 5 - y;
+                const arrayCol = x + 5;
+                
+                cell.dataset['row'] = arrayRow.toString();
+                cell.dataset['col'] = arrayCol.toString();
+                cell.dataset['cartX'] = x.toString();
+                cell.dataset['cartY'] = y.toString();
+                
+                if (x === 0 || y === 0) {
+                    cell.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+                }
+                
+                if (type === 'enemy') {
+                    cell.onclick = () => this.playerShoot(arrayRow, arrayCol);
+                } else {
+                    if (this.playerBoard[arrayRow][arrayCol] > 0) {
+                        cell.classList.add('ship');
+                    }
+                }
+                
+                board.appendChild(cell);
+            }
+        }
+    } else {
+        // Renderização Normal
+        board.style.gridTemplateColumns = `repeat(${boardSize + 1}, 1fr)`;
+        board.style.gridTemplateRows = `repeat(${boardSize + 1}, 1fr)`;
+            
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'board-cell header';
+        board.appendChild(emptyCell);
+        
+       const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
+            for (let i = 0; i < boardSize; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = String.fromCharCode(65 + i);
+            board.appendChild(cell);
+        }
+        
+        for (let row = 0; row < boardSize; row++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = (row + 1).toString();
+            board.appendChild(rowHeader);
+            
+            for (let col = 0; col < boardSize; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                cell.dataset['row'] = row.toString();
+                cell.dataset['col'] = col.toString();
+                
+                if (type === 'enemy') {
+                    cell.onclick = () => this.playerShoot(row, col);
+                } else {
+                    if (this.playerBoard[row][col] > 0) {
+                        cell.classList.add('ship');
+                    }
+                }
+                
+                board.appendChild(cell);
+            }
+        }
+    }
+}
+ 
+
+    // ========== MULTIPLAYER ==========
     startMultiplayer() {
         // Mostrar modal para inserir nomes dos jogadores
         const modal = document.getElementById('gameOverModal');
@@ -314,14 +473,10 @@ class BattleshipGame {
         this.resetGame();
         this.gameState = 'placement';
         this.showScreen('placementScreen');
-
-        const confirmBtn = document.getElementById('confirmBtn');
-        if (confirmBtn) { confirmBtn.disabled = true; }
-
         this.initPlacementBoard();
         this.renderShipsToPlace();
-        this.checkPlacementComplete();
         
+        // Atualizar título para mostrar qual jogador está posicionando
         const placementTitle = document.querySelector('#placementScreen h2');
         placementTitle.textContent = `🚢 ${player1Name} - Posicione Seus Navios`;
         
@@ -340,13 +495,9 @@ class BattleshipGame {
                 this.playerBoard = this.createEmptyBoard();
                 this.playerShips = [];
                 this.currentShipIndex = null;
-
-                const confirmBtn = document.getElementById('confirmBtn');
-                if (confirmBtn) { confirmBtn.disabled = true; }
-
+                
                 this.initPlacementBoard();
                 this.renderShipsToPlace();
-                this.checkPlacementComplete();
                 
                 const placementTitle = document.querySelector('#placementScreen h2');
                 placementTitle.textContent = `🚢 ${this.multiplayerState.player2Name} - Posicione Seus Navios`;
@@ -420,165 +571,87 @@ class BattleshipGame {
 
     renderMultiplayerBoard(boardId, player, showShips) {
         const board = document.getElementById(boardId);
-        if (!board) return;
         board.innerHTML = '';
-        board.style.display = 'grid';
 
         const playerBoard = player === 1 ? this.multiplayerState.player1Board : this.multiplayerState.player2Board;
         const playerShips = player === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
         const isEnemyBoard = boardId === 'enemyBoard';
 
-        // Função auxiliar para aplicar estado visual à célula
-        const applyVisualState = (cell, cellValue, isAxis, shipsList, isEnemy) => {
-            if (isEnemy) {
-                if (cellValue === -1) {
-                    cell.classList.add('miss');
-                    if (isAxis) {
-                        cell.style.background = 'rgba(100,100,100,0.7)';
-                        cell.style.border = '2px solid #ff6b6b';
-                        cell.textContent = '✕';
-                        cell.style.color = '#ff6b6b';
-                    }
-                } else if (cellValue === -2) {
-                    cell.classList.add('hit');
-                    cell.textContent = '💥';
-                    if (isAxis) { cell.style.outline = '2px solid #ff6b6b'; }
-                } else if (cellValue > 0) {
-                    const shipIndex = cellValue - 1;
-                    if (shipsList[shipIndex] && shipsList[shipIndex].hits === shipsList[shipIndex].size) {
-                        cell.classList.add('sunk');
-                        cell.textContent = '☠️';
-                    }
-                }
-            } else {
-                if (showShips && cellValue > 0) {
-                    cell.classList.add('ship');
-                }
-                if (cellValue === -1) {
-                    cell.classList.add('miss');
-                    if (isAxis) {
-                        cell.style.background = 'rgba(100,100,100,0.7)';
-                        cell.style.border = '2px solid #ff6b6b';
-                        cell.textContent = '✕';
-                        cell.style.color = '#ff6b6b';
-                    }
-                } else if (cellValue === -2) {
-                    cell.classList.add('hit');
-                    cell.textContent = '💥';
-                    if (isAxis) { cell.style.outline = '2px solid #ff6b6b'; }
-                }
-                // Verificar navio afundado
-                if (cellValue > 0 || cellValue === -2) {
-                    const originalValue = cellValue === -2 ? this.getOriginalShipValue(player, parseInt(cell.dataset.row), parseInt(cell.dataset.col)) : cellValue;
-                    if (originalValue > 0) {
-                        const shipIndex = originalValue - 1;
-                        if (shipsList[shipIndex] && shipsList[shipIndex].hits === shipsList[shipIndex].size) {
-                            cell.classList.remove('hit');
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'board-cell header';
+        board.appendChild(emptyCell);
+
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = String.fromCharCode(65 + i);
+            board.appendChild(cell);
+        }
+
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = row + 1;
+            board.appendChild(rowHeader);
+
+            for (let col = 0; col < BOARD_SIZE; col++) {
+                const cell = document.createElement('div');
+                cell.className = 'board-cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
+
+                // Verificar se a célula já foi atingida anteriormente
+                const cellValue = playerBoard[row][col];
+                
+                if (isEnemyBoard) {
+                    // No tabuleiro inimigo, mostrar histórico de jogadas
+                    if (cellValue === -1) {
+                        // Já foi atirado e errou
+                        cell.classList.add('miss');
+                        // Textura de água aplicada via CSS
+                    } else if (cellValue === -2) {
+                        // Já foi atirado e acertou
+                        cell.classList.add('hit');
+                        cell.textContent = '💥';
+                    } else if (cellValue > 0) {
+                        // Verificar se o navio foi afundado
+                        const shipIndex = cellValue - 1;
+                        if (playerShips[shipIndex] && playerShips[shipIndex].hits === playerShips[shipIndex].size) {
                             cell.classList.add('sunk');
                             cell.textContent = '☠️';
                         }
                     }
+                    
+                    cell.addEventListener('click', () => this.multiplayerShoot(row, col));
+                } else {
+                    // No próprio tabuleiro, mostrar navios e histórico
+                    if (showShips && cellValue > 0 && cellValue !== -1 && cellValue !== -2) {
+                        cell.classList.add('ship');
+                    }
+                    
+                    if (cellValue === -1) {
+                        cell.classList.add('miss');
+                        // Textura de água aplicada via CSS
+                    } else if (cellValue === -2) {
+                        cell.classList.add('hit');
+                        cell.textContent = '💥';
+                    }
+                    
+                    // Verificar se pertence a um navio afundado
+                    if (cellValue > 0 || cellValue === -2) {
+                        const originalValue = cellValue === -2 ? this.getOriginalShipValue(player, row, col) : cellValue;
+                        if (originalValue > 0) {
+                            const shipIndex = originalValue - 1;
+                            if (playerShips[shipIndex] && playerShips[shipIndex].hits === playerShips[shipIndex].size) {
+                                cell.classList.remove('hit');
+                                cell.classList.add('sunk');
+                                cell.textContent = '☠️';
+                            }
+                        }
+                    }
                 }
-            }
-        };
 
-        if (this.cartesianMode) {
-            // ── Tabuleiro cartesiano -5 a 5 ──
-            const gridSize = 11;
-            board.style.gridTemplateColumns = `repeat(${gridSize + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${gridSize + 1}, 1fr)`;
-
-            // Célula de canto X/Y
-            const xyCell = document.createElement('div');
-            xyCell.className = 'board-cell header cartesian-origin';
-            xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:100%;height:1px;background:white;transform:rotate(-45deg);"></div><span style="position:absolute;top:5%;left:70%;font-size:0.7rem;font-weight:bold;">X</span><span style="position:absolute;bottom:5%;left:10%;font-size:0.7rem;font-weight:bold;">Y</span></div>';
-            board.appendChild(xyCell);
-
-            // Cabeçalho eixo X (-5 a 5)
-            for (let x = -5; x <= 5; x++) {
-                const cell = document.createElement('div');
-                cell.className = 'board-cell header';
-                cell.textContent = x;
-                cell.style.fontWeight = 'bold';
-                if (x === 0) { cell.style.color = '#ff6b6b'; }
                 board.appendChild(cell);
-            }
-
-            // Linhas (Y de 5 a -5)
-            for (let y = 5; y >= -5; y--) {
-                const rowHeader = document.createElement('div');
-                rowHeader.className = 'board-cell header';
-                rowHeader.textContent = y;
-                rowHeader.style.fontWeight = 'bold';
-                if (y === 0) { rowHeader.style.color = '#ff6b6b'; }
-                board.appendChild(rowHeader);
-
-                for (let x = -5; x <= 5; x++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'board-cell';
-
-                    const arrayRow = 5 - y;
-                    const arrayCol = x + 5;
-
-                    cell.dataset.row   = arrayRow.toString();
-                    cell.dataset.col   = arrayCol.toString();
-                    cell.dataset.cartX = x.toString();
-                    cell.dataset.cartY = y.toString();
-
-                    const isAxis = (x === 0 || y === 0);
-                    if (isAxis) {
-                        cell.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-                        cell.style.borderColor      = '#ff6b6b';
-                    }
-
-                    const cellValue = playerBoard[arrayRow] ? playerBoard[arrayRow][arrayCol] : 0;
-                    applyVisualState(cell, cellValue, isAxis, playerShips, isEnemyBoard);
-
-                    if (isEnemyBoard) {
-                        cell.addEventListener('click', () => this.multiplayerShoot(arrayRow, arrayCol));
-                    }
-
-                    board.appendChild(cell);
-                }
-            }
-
-        } else {
-            // ── Tabuleiro normal A-J / 1-10 ──
-            board.style.gridTemplateColumns = `repeat(${BOARD_SIZE + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${BOARD_SIZE + 1}, 1fr)`;
-
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'board-cell header';
-            board.appendChild(emptyCell);
-
-            for (let i = 0; i < BOARD_SIZE; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'board-cell header';
-                cell.textContent = String.fromCharCode(65 + i);
-                board.appendChild(cell);
-            }
-
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                const rowHeader = document.createElement('div');
-                rowHeader.className = 'board-cell header';
-                rowHeader.textContent = row + 1;
-                board.appendChild(rowHeader);
-
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'board-cell';
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
-
-                    const cellValue = playerBoard[row][col];
-                    applyVisualState(cell, cellValue, false, playerShips, isEnemyBoard);
-
-                    if (isEnemyBoard) {
-                        cell.addEventListener('click', () => this.multiplayerShoot(row, col));
-                    }
-
-                    board.appendChild(cell);
-                }
             }
         }
     }
@@ -607,31 +680,32 @@ class BattleshipGame {
         const enemyShips = enemyPlayer === 1 ? this.multiplayerState.player1Ships : this.multiplayerState.player2Ships;
         const currentStats = currentPlayer === 1 ? this.multiplayerState.player1Stats : this.multiplayerState.player2Stats;
 
+        // Verificar se a célula já foi clicada
         if (enemyBoard[row][col] === -1 || enemyBoard[row][col] === -2) {
-            return;
+            return; // Já foi atirado aqui
         }
-
-        const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
-        const isAxisCell = this.cartesianMode && cell && (cell.dataset.cartX === '0' || cell.dataset.cartY === '0');
 
         currentStats.shotsGiven++;
 
         if (enemyBoard[row][col] > 0) {
+            // Acertou!
             currentStats.hits++;
-
+            
             const shipIndex = enemyBoard[row][col] - 1;
             enemyShips[shipIndex].hits++;
+
+            // Marcar como acertado no tabuleiro
             enemyBoard[row][col] = -2;
 
+            // Atualizar visualmente
+            const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
             if (cell) {
                 cell.classList.add('hit');
                 cell.textContent = '💥';
-                if (isAxisCell) { cell.style.outline = '2px solid #ff6b6b'; }
             }
 
             if (enemyShips[shipIndex].hits === enemyShips[shipIndex].size) {
-                // Afundou — explosão
-                this.playSound('explosion');
+                // Afundou!
                 currentStats.shipsDestroyed++;
                 this.markMultiplayerShipAsSunk(enemyPlayer, shipIndex);
 
@@ -644,27 +718,24 @@ class BattleshipGame {
                     this.endMultiplayerGame(currentPlayer);
                     return;
                 }
-            } else {
-                // Acertou mas não afundou
-                this.playSound('hit');
             }
 
             this.updateMultiplayerUI();
         } else {
+            // Errou
             currentStats.misses++;
-            this.playSound('miss');
+            
+            // Marcar como errado no tabuleiro
             enemyBoard[row][col] = -1;
 
+            // Atualizar visualmente
+            const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
             if (cell) {
                 cell.classList.add('miss');
-                if (isAxisCell) {
-                    cell.style.background = 'rgba(100,100,100,0.7)';
-                    cell.style.border = '2px solid #ff6b6b';
-                    cell.textContent = '✕';
-                    cell.style.color = '#ff6b6b';
-                }
+                // Textura de água aplicada via CSS
             }
 
+            // Trocar turno
             this.switchMultiplayerTurn();
         }
     }
@@ -1101,127 +1172,117 @@ class BattleshipGame {
         }, 100);
     }
 
-    createEmptyBoard() {
+    playSound(type) {
+        if (!this.settings.soundEnabled) return;
+        console.log(`Playing sound: ${type}`);
+    }
+
+        createEmptyBoard() {
         const size = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
         return Array(size).fill(null).map(() => Array(size).fill(0));
     }
 
-    showScreen(screenId) {
-        const allScreens = ['menuScreen', 'sosMissionScreen', 'placementScreen', 'gameScreen', 'cartesianMenuScreen'];
-        allScreens.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = 'none';
-        });
-
-        const screen = document.getElementById(screenId);
-        if (!screen) return;
-
-        if (screenId === 'menuScreen' || screenId === 'sosMissionScreen' || screenId === 'cartesianMenuScreen') {
-            screen.style.display = 'flex';
-        } else {
-            screen.style.display = 'block';
-        }
+        showScreen(screenId) {
+        document.getElementById('menuScreen').style.display = 'none';
+        document.getElementById('cartesianMenuScreen').style.display = 'none';
+        document.getElementById('sosMissionScreen').style.display = 'none';
+        document.getElementById('placementScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'none';
+        document.getElementById(screenId).style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     initPlacementBoard() {
         const board = document.getElementById('placementBoard');
         if (!board) return;
-
+        
         board.innerHTML = '';
         board.style.display = 'grid';
-
+        
         if (this.cartesianMode) {
+            // Modo Cartesiano: 11x11 (de -5 a 5)
             const gridSize = 11;
             board.style.gridTemplateColumns = `repeat(${gridSize + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${gridSize + 1}, 1fr)`;
-
-            // Célula de canto X/Y
+            board.style.gridTemplateRows = `repeat(${gridSize + 1}, 1fr)`;
+            
+            // Célula X/Y no canto superior esquerdo
             const xyCell = document.createElement('div');
             xyCell.className = 'board-cell header cartesian-origin';
-            xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:100%;height:1px;background:white;transform:rotate(-45deg);"></div><span style="position:absolute;top:5%;left:70%;font-size:0.7rem;font-weight:bold;">X</span><span style="position:absolute;bottom:5%;left:10%;font-size:0.7rem;font-weight:bold;">Y</span></div>';
+            xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:141%;height:2px;background:white;transform:rotate(-45deg);transform-origin:center;"></div><span style="position:absolute;top:10%;right:15%;font-size:0.65rem;font-weight:900;color:white;text-shadow:0 0 3px black;">X</span><span style="position:absolute;bottom:10%;left:15%;font-size:0.65rem;font-weight:900;color:white;text-shadow:0 0 3px black;">Y</span></div>';
             board.appendChild(xyCell);
-
-            // Cabeçalho eixo X (-5 a 5)
+            
+            // Cabeçalho X (de -5 a 5)
             for (let x = -5; x <= 5; x++) {
                 const cell = document.createElement('div');
                 cell.className = 'board-cell header';
                 cell.textContent = x;
                 cell.style.fontWeight = 'bold';
-                if (x === 0) { cell.style.color = '#ff6b6b'; }
+                if (x === 0) cell.style.color = '#ff6b6b';
                 board.appendChild(cell);
             }
-
-            // Linhas (Y de 5 a -5)
+            
+            // Linhas do tabuleiro
             for (let y = 5; y >= -5; y--) {
+                // Cabeçalho Y
                 const rowHeader = document.createElement('div');
                 rowHeader.className = 'board-cell header';
                 rowHeader.textContent = y;
                 rowHeader.style.fontWeight = 'bold';
-                if (y === 0) { rowHeader.style.color = '#ff6b6b'; }
+                if (y === 0) rowHeader.style.color = '#ff6b6b';
                 board.appendChild(rowHeader);
-
+                
+                // Células do tabuleiro
                 for (let x = -5; x <= 5; x++) {
                     const cell = document.createElement('div');
                     cell.className = 'board-cell';
-
+                    
+                    // Converte coordenadas cartesianas para índices de array (0-10)
                     const arrayRow = 5 - y;
                     const arrayCol = x + 5;
-
-                    cell.dataset.row   = arrayRow.toString();
-                    cell.dataset.col   = arrayCol.toString();
-                    cell.dataset.cartX = x.toString();
-                    cell.dataset.cartY = y.toString();
-
+                    
+                    cell.dataset['row'] = arrayRow.toString();
+                    cell.dataset['col'] = arrayCol.toString();
+                    cell.dataset['cartX'] = x.toString();
+                    cell.dataset['cartY'] = y.toString();
+                    
+                    // Destaca eixos
                     if (x === 0 || y === 0) {
                         cell.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-                        cell.style.borderColor      = '#ff6b6b';
+                        cell.style.borderColor = '#ff6b6b';
                     }
-
-                    cell.addEventListener('mouseenter', () => {
-                        this.clearPlacementPreview();
-                        this.showPlacementPreview(arrayRow, arrayCol);
-                    });
-                    cell.addEventListener('mouseleave', () => this.clearPlacementPreview());
-                    cell.addEventListener('click', () => this.placeShipAt(arrayRow, arrayCol));
-
+                    
+                    cell.onclick = () => this.placeShipAt(arrayRow, arrayCol);
                     board.appendChild(cell);
                 }
             }
-
         } else {
-            board.style.gridTemplateColumns = `repeat(${BOARD_SIZE + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${BOARD_SIZE + 1}, 1fr)`;
-
+            // CÓDIGO NORMAL (modo não-cartesiano) - MANTENHA O CÓDIGO ORIGINAL AQUI
+            board.style.gridTemplateColumns = `repeat(${this.cartesianMode ? this.cartesianBoardSize + 1 : BOARD_SIZE + 1}, 1fr)`;
+            board.style.gridTemplateRows = `repeat(${this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE + 1}, 1fr)`;
+            
             const emptyCell = document.createElement('div');
             emptyCell.className = 'board-cell header';
             board.appendChild(emptyCell);
-
+            
             for (let i = 0; i < BOARD_SIZE; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'board-cell header';
                 cell.textContent = String.fromCharCode(65 + i);
                 board.appendChild(cell);
             }
-
+            
             for (let row = 0; row < BOARD_SIZE; row++) {
                 const rowHeader = document.createElement('div');
                 rowHeader.className = 'board-cell header';
                 rowHeader.textContent = (row + 1).toString();
                 board.appendChild(rowHeader);
-
+                
                 for (let col = 0; col < BOARD_SIZE; col++) {
                     const cell = document.createElement('div');
                     cell.className = 'board-cell';
-                    cell.dataset.row = row.toString();
-                    cell.dataset.col = col.toString();
-
-                    cell.addEventListener('mouseenter', () => {
-                        this.clearPlacementPreview();
-                        this.showPlacementPreview(row, col);
-                    });
-                    cell.addEventListener('mouseleave', () => this.clearPlacementPreview());
-                    cell.addEventListener('click', () => this.placeShipAt(row, col));
-
+                    cell.dataset['row'] = row.toString();
+                    cell.dataset['col'] = col.toString();
+                    cell.onclick = () => this.placeShipAt(row, col);
                     board.appendChild(cell);
                 }
             }
@@ -1230,30 +1291,32 @@ class BattleshipGame {
 
     showPlacementPreview(row, col) {
         if (this.currentShipIndex === null) return;
-
+        
         const shipsToUse = this.gameMode === 'sos' ? SHIPS.slice(0, 3) : SHIPS;
         const ship = shipsToUse[this.currentShipIndex];
-
+        
         if (!ship || this.playerShips[this.currentShipIndex]) return;
-
-        const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
+        
         const positions = [];
         let isValid = true;
-
+        
+        // Calcular posições da prévia
         for (let i = 0; i < ship.size; i++) {
             const newRow = this.shipOrientation === 'horizontal' ? row : row + i;
             const newCol = this.shipOrientation === 'horizontal' ? col + i : col;
-
-            if (newRow >= boardSize || newCol >= boardSize ||
-                newRow < 0 || newCol < 0 ||
-                this.playerBoard[newRow][newCol] !== 0) {
+            
+            if (newRow >= BOARD_SIZE || newCol >= BOARD_SIZE || this.playerBoard[newRow][newCol] !== 0) {
                 isValid = false;
+                positions.push([newRow, newCol]);
+                continue;
             }
+            
             positions.push([newRow, newCol]);
         }
-
+        
+        // Aplicar classes de prévia
         positions.forEach(([r, c]) => {
-            if (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
+            if (r < BOARD_SIZE && c < BOARD_SIZE) {
                 const cell = document.querySelector(`#placementBoard .board-cell[data-row="${r}"][data-col="${c}"]`);
                 if (cell) {
                     cell.classList.add(isValid ? 'ship-preview' : 'ship-preview-invalid');
@@ -1274,66 +1337,36 @@ class BattleshipGame {
         const container = document.getElementById('shipsToPlace');
         container.innerHTML = '';
 
-        const shipsToRender = this.gameMode === 'sos'
+        const shipsToRender = this.gameMode === 'sos' 
             ? SHIPS.slice(0, 3)
             : SHIPS;
 
         shipsToRender.forEach((ship, index) => {
-            const isSelected = index === this.currentShipIndex;
-            const isPlaced   = !!this.playerShips[index];
-            const isVertical = isSelected && this.shipOrientation === 'vertical';
-
             const shipItem = document.createElement('div');
             shipItem.className = 'ship-item';
-            if (isSelected) { shipItem.classList.add('selected'); }
-
-            // Prévia do navio — muda direção quando selecionado e vertical
-            const preview = document.createElement('div');
-            preview.className = 'ship-preview';
-            if (isVertical) {
-                preview.style.flexDirection = 'column';
-                preview.style.display = 'inline-flex';
+            if (index === this.currentShipIndex) {
+                shipItem.classList.add('selected');
             }
 
+            const preview = document.createElement('div');
+            preview.className = 'ship-preview';
             for (let i = 0; i < ship.size; i++) {
                 const cell = document.createElement('div');
                 cell.className = 'ship-preview-cell';
-                // Destaque diferente quando selecionado
-                if (isSelected) {
-                    cell.style.background = 'linear-gradient(135deg, #ffdd44, #ff8844)';
-                    cell.style.borderColor = '#ffdd44';
-                    cell.style.boxShadow   = '0 0 6px rgba(255,221,68,0.7)';
-                }
                 preview.appendChild(cell);
             }
 
-            // Nome + indicador de orientação
             const name = document.createElement('div');
             name.className = 'ship-name';
             name.textContent = ship.name;
 
-            if (isSelected) {
-                const orientLabel = document.createElement('div');
-                orientLabel.style.cssText = 'font-size:1rem;margin-top:4px;color:var(--explosion-yellow);font-weight:700;letter-spacing:1px;';
-                orientLabel.textContent = isVertical ? '↕ VERTICAL' : '↔ HORIZONTAL';
-                shipItem.appendChild(preview);
-                shipItem.appendChild(name);
-                shipItem.appendChild(orientLabel);
-            } else {
-                shipItem.appendChild(preview);
-                shipItem.appendChild(name);
-            }
+            shipItem.appendChild(preview);
+            shipItem.appendChild(name);
+            shipItem.addEventListener('click', () => this.selectShip(index));
 
-            if (!isPlaced) {
-                shipItem.addEventListener('click', () => this.selectShip(index));
-            } else {
-                shipItem.style.opacity  = '0.5';
-                shipItem.style.cursor   = 'not-allowed';
-                // Marca como posicionado
-                const placedLabel = document.createElement('div');
-                placedLabel.style.cssText = 'font-size:0.95rem;margin-top:4px;color:var(--success-green);font-weight:700;';
-                placedLabel.textContent = '✓ Posicionado';
-                shipItem.appendChild(placedLabel);
+            if (this.playerShips[index]) {
+                shipItem.style.opacity = '0.5';
+                shipItem.style.cursor = 'not-allowed';
             }
 
             container.appendChild(shipItem);
@@ -1343,14 +1376,11 @@ class BattleshipGame {
     selectShip(index) {
         if (this.playerShips[index]) return;
         this.currentShipIndex = index;
-        this.clearPlacementPreview();
         this.renderShipsToPlace();
     }
 
     rotateShip() {
         this.shipOrientation = this.shipOrientation === 'horizontal' ? 'vertical' : 'horizontal';
-        this.clearPlacementPreview();
-        this.renderShipsToPlace();
     }
 
     placeShipAt(row, col) {
@@ -1402,7 +1432,7 @@ class BattleshipGame {
         this.checkPlacementComplete();
     }
 
-    updatePlacementBoard() {
+        updatePlacementBoard() {
         const board = document.getElementById('placementBoard');
         if (!board) return;
         
@@ -1462,7 +1492,7 @@ class BattleshipGame {
                     positions.push([newRow, newCol]);
                 }
 
-                if (valid && positions.length === ship.size) {
+                if (valid) {
                     positions.forEach(([r, c]) => {
                         this.playerBoard[r][c] = index + 1;
                     });
@@ -1508,7 +1538,7 @@ class BattleshipGame {
             let placed = false;
             let attempts = 0;
 
-            while (!placed && attempts < 200) {
+            while (!placed && attempts < 100) {
                 const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
                 const row = Math.floor(Math.random() * boardSize);
                 const col = Math.floor(Math.random() * boardSize);
@@ -1521,16 +1551,15 @@ class BattleshipGame {
                     const newRow = orientation === 'horizontal' ? row : row + i;
                     const newCol = orientation === 'horizontal' ? col + i : col;
 
+                    const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
                     if (newRow >= boardSize || newCol >= boardSize || this.aiBoard[newRow][newCol] !== 0) {
-                        valid = false;
                         break;
                     }
 
                     positions.push([newRow, newCol]);
                 }
 
-                // Garantir que todas as posições foram preenchidas
-                if (valid && positions.length === ship.size) {
+                if (valid) {
                     positions.forEach(([r, c]) => {
                         this.aiBoard[r][c] = index + 1;
                     });
@@ -1576,108 +1605,40 @@ class BattleshipGame {
 
     renderBoard(boardId, type) {
         const board = document.getElementById(boardId);
-        if (!board) return;
         board.innerHTML = '';
-        board.style.display = 'grid';
 
-        if (this.cartesianMode) {
-            // ── Tabuleiro cartesiano: eixos -5 a 5 ──
-            const gridSize = 11;
-            board.style.gridTemplateColumns = `repeat(${gridSize + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${gridSize + 1}, 1fr)`;
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'board-cell header';
+        board.appendChild(emptyCell);
 
-            // Célula de canto X/Y
-            const xyCell = document.createElement('div');
-            xyCell.className = 'board-cell header cartesian-origin';
-            xyCell.innerHTML = '<div style="position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:100%;height:1px;background:white;transform:rotate(-45deg);"></div><span style="position:absolute;top:5%;left:70%;font-size:0.7rem;font-weight:bold;">X</span><span style="position:absolute;bottom:5%;left:10%;font-size:0.7rem;font-weight:bold;">Y</span></div>';
-            board.appendChild(xyCell);
+        for (let i = 0; i < BOARD_SIZE; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'board-cell header';
+            cell.textContent = String.fromCharCode(65 + i);
+            board.appendChild(cell);
+        }
 
-            // Cabeçalho eixo X (-5 a 5)
-            for (let x = -5; x <= 5; x++) {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            const rowHeader = document.createElement('div');
+            rowHeader.className = 'board-cell header';
+            rowHeader.textContent = row + 1;
+            board.appendChild(rowHeader);
+
+            for (let col = 0; col < BOARD_SIZE; col++) {
                 const cell = document.createElement('div');
-                cell.className = 'board-cell header';
-                cell.textContent = x;
-                cell.style.fontWeight = 'bold';
-                if (x === 0) cell.style.color = '#ff6b6b';
-                board.appendChild(cell);
-            }
+                cell.className = 'board-cell';
+                cell.dataset.row = row;
+                cell.dataset.col = col;
 
-            // Linhas (Y de 5 até -5, de cima para baixo)
-            for (let y = 5; y >= -5; y--) {
-                const rowHeader = document.createElement('div');
-                rowHeader.className = 'board-cell header';
-                rowHeader.textContent = y;
-                rowHeader.style.fontWeight = 'bold';
-                if (y === 0) rowHeader.style.color = '#ff6b6b';
-                board.appendChild(rowHeader);
-
-                for (let x = -5; x <= 5; x++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'board-cell';
-
-                    const arrayRow = 5 - y;
-                    const arrayCol = x + 5;
-
-                    cell.dataset.row   = arrayRow.toString();
-                    cell.dataset.col   = arrayCol.toString();
-                    cell.dataset.cartX = x.toString();
-                    cell.dataset.cartY = y.toString();
-
-                    // Destaca eixos
-                    if (x === 0 || y === 0) {
-                        cell.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-                        cell.style.borderColor      = '#ff6b6b';
+                if (type === 'enemy') {
+                    cell.addEventListener('click', () => this.playerShoot(row, col));
+                } else {
+                    if (this.playerBoard[row][col] > 0) {
+                        cell.classList.add('ship');
                     }
-
-                    if (type === 'enemy') {
-                        cell.addEventListener('click', () => this.playerShoot(arrayRow, arrayCol));
-                    } else {
-                        if (this.playerBoard[arrayRow] && this.playerBoard[arrayRow][arrayCol] > 0) {
-                            cell.classList.add('ship');
-                        }
-                    }
-
-                    board.appendChild(cell);
                 }
-            }
-        } else {
-            // ── Tabuleiro normal: A-J / 1-10 ──
-            board.style.gridTemplateColumns = `repeat(${BOARD_SIZE + 1}, 1fr)`;
-            board.style.gridTemplateRows    = `repeat(${BOARD_SIZE + 1}, 1fr)`;
 
-            const emptyCell = document.createElement('div');
-            emptyCell.className = 'board-cell header';
-            board.appendChild(emptyCell);
-
-            for (let i = 0; i < BOARD_SIZE; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'board-cell header';
-                cell.textContent = String.fromCharCode(65 + i);
                 board.appendChild(cell);
-            }
-
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                const rowHeader = document.createElement('div');
-                rowHeader.className = 'board-cell header';
-                rowHeader.textContent = row + 1;
-                board.appendChild(rowHeader);
-
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'board-cell';
-                    cell.dataset.row = row;
-                    cell.dataset.col = col;
-
-                    if (type === 'enemy') {
-                        cell.addEventListener('click', () => this.playerShoot(row, col));
-                    } else {
-                        if (this.playerBoard[row][col] > 0) {
-                            cell.classList.add('ship');
-                        }
-                    }
-
-                    board.appendChild(cell);
-                }
             }
         }
     }
@@ -1686,11 +1647,9 @@ class BattleshipGame {
         if (!this.isPlayerTurn || this.gameState !== 'playing') return;
 
         const cell = document.querySelector(`#enemyBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
-        if (!cell || cell.classList.contains('hit') || cell.classList.contains('miss')) {
+        if (cell.classList.contains('hit') || cell.classList.contains('miss')) {
             return;
         }
-
-        const isAxisCell = this.cartesianMode && (cell.dataset.cartX === '0' || cell.dataset.cartY === '0');
 
         this.stats.shotsGiven++;
         
@@ -1698,16 +1657,11 @@ class BattleshipGame {
             this.stats.hits++;
             cell.classList.add('hit');
             cell.textContent = '💥';
-            if (isAxisCell) {
-                cell.style.outline = '2px solid #ff6b6b';
-            }
             
             const shipIndex = this.aiBoard[row][col] - 1;
             this.aiShips[shipIndex].hits++;
 
             if (this.aiShips[shipIndex].hits === this.aiShips[shipIndex].size) {
-                // Última parte: afundou — som de explosão
-                this.playSound('explosion');
                 this.stats.shipsDestroyed++;
                 this.markShipAsSunk('enemy', shipIndex);
                 
@@ -1719,20 +1673,11 @@ class BattleshipGame {
                     this.endGame(true);
                     return;
                 }
-            } else {
-                // Acertou mas não afundou — som de hit
-                this.playSound('hit');
             }
         } else {
             this.stats.misses++;
-            this.playSound('miss');
             cell.classList.add('miss');
-            if (isAxisCell) {
-                cell.style.background = 'rgba(100,100,100,0.7)';
-                cell.style.border = '2px solid #ff6b6b';
-                cell.textContent = '✕';
-                cell.style.color = '#ff6b6b';
-            }
+            // Textura de água aplicada via CSS
             this.isPlayerTurn = false;
             this.updateGameInfo();
             
@@ -1790,11 +1735,10 @@ class BattleshipGame {
     }
 
     aiShootRandom() {
-        const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
         let row, col;
         do {
-            row = Math.floor(Math.random() * boardSize);
-            col = Math.floor(Math.random() * boardSize);
+            row = Math.floor(Math.random() * BOARD_SIZE);
+            col = Math.floor(Math.random() * BOARD_SIZE);
         } while (this.isCellShot(row, col));
         return [row, col];
     }
@@ -1817,10 +1761,9 @@ class BattleshipGame {
             }
         }
 
-        const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
         const validCells = [];
-        for (let row = 0; row < boardSize; row++) {
-            for (let col = 0; col < boardSize; col++) {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
                 if (!this.isCellShot(row, col) && (row + col) % 2 === 0) {
                     validCells.push([row, col]);
                 }
@@ -1835,9 +1778,8 @@ class BattleshipGame {
     }
 
     aiShootImpossible() {
-        const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
-        for (let row = 0; row < boardSize; row++) {
-            for (let col = 0; col < boardSize; col++) {
+        for (let row = 0; row < BOARD_SIZE; row++) {
+            for (let col = 0; col < BOARD_SIZE; col++) {
                 if (!this.isCellShot(row, col) && this.playerBoard[row][col] > 0) {
                     return [row, col];
                 }
@@ -1854,17 +1796,11 @@ class BattleshipGame {
     executeAiShot(row, col) {
         this.aiStats.shotsGiven++;
         const cell = document.querySelector(`#playerBoard .board-cell[data-row="${row}"][data-col="${col}"]`);
-        if (!cell) return;
-
-        const isAxisCell = this.cartesianMode && (cell.dataset.cartX === '0' || cell.dataset.cartY === '0');
 
         if (this.playerBoard[row][col] > 0) {
             this.aiStats.hits++;
             cell.classList.add('hit');
             cell.textContent = '💥';
-            if (isAxisCell) {
-                cell.style.outline = '2px solid #ff6b6b';
-            }
 
             const shipIndex = this.playerBoard[row][col] - 1;
             this.playerShips[shipIndex].hits++;
@@ -1872,8 +1808,6 @@ class BattleshipGame {
             this.addAdjacentCellsToQueue(row, col);
 
             if (this.playerShips[shipIndex].hits === this.playerShips[shipIndex].size) {
-                // Afundou — explosão
-                this.playSound('explosion');
                 this.markShipAsSunk('player', shipIndex);
                 this.aiTargetQueue = [];
                 
@@ -1886,35 +1820,25 @@ class BattleshipGame {
                     this.endGame(false);
                     return;
                 }
-            } else {
-                // Acertou mas não afundou
-                this.playSound('hit');
             }
 
             setTimeout(() => this.aiTurn(), 1000);
         } else {
             this.aiStats.misses++;
-            this.playSound('miss');
             cell.classList.add('miss');
-            if (isAxisCell) {
-                cell.style.background = 'rgba(100,100,100,0.7)';
-                cell.style.border = '2px solid #ff6b6b';
-                cell.textContent = '✕';
-                cell.style.color = '#ff6b6b';
-            }
+            // Textura de água aplicada via CSS
             this.isPlayerTurn = true;
             this.updateGameInfo();
         }
     }
 
     addAdjacentCellsToQueue(row, col) {
-        const boardSize = this.cartesianMode ? this.cartesianBoardSize : BOARD_SIZE;
         const directions = [[-1, 0], [1, 0], [0, -1], [0, 1]];
         directions.forEach(([dr, dc]) => {
             const newRow = row + dr;
             const newCol = col + dc;
-            if (newRow >= 0 && newRow < boardSize &&
-                newCol >= 0 && newCol < boardSize &&
+            if (newRow >= 0 && newRow < BOARD_SIZE && 
+                newCol >= 0 && newCol < BOARD_SIZE &&
                 !this.isCellShot(newRow, newCol)) {
                 this.aiTargetQueue.push([newRow, newCol]);
             }
@@ -2045,7 +1969,7 @@ class BattleshipGame {
 
     handleGameOverAction(action) {
         document.getElementById('gameOverModal').classList.remove('active');
-
+        
         if (action === 'next') {
             this.startGame('campaign');
         } else if (action === 'retry') {
@@ -2055,15 +1979,7 @@ class BattleshipGame {
             if (this.gameMode === 'campaign') {
                 this.campaignLevel = 1;
             }
-            // Se estava no modo cartesiano, relanca com o modo cartesiano correto
-            if (this.cartesianMode) {
-                const cartMode = this.gameMode === 'multiplayer'
-                    ? 'cartesian-multiplayer'
-                    : 'cartesian-classic';
-                this.startGame(cartMode);
-            } else {
-                this.startGame(this.gameMode);
-            }
+            this.startGame(this.gameMode);
         }
     }
 
