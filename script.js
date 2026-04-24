@@ -688,45 +688,58 @@ class BattleshipGame {
         const oldPlayer = this.multiplayerState.currentPlayer;
         this.multiplayerState.currentPlayer = oldPlayer === 1 ? 2 : 1;
         const newPlayer = this.multiplayerState.currentPlayer;
-        
+
         const newPlayerName = newPlayer === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
         const oldPlayerName = oldPlayer === 1 ? this.multiplayerState.player1Name : this.multiplayerState.player2Name;
-        
-        // Mostrar modal de troca de turno
-        const modal = document.getElementById('gameOverModal');
-        const title = document.getElementById('gameOverTitle');
-        const message = document.getElementById('gameOverMessage');
-        const buttons = document.getElementById('gameOverButtons');
-        
-        title.textContent = '🔄 TROCA DE TURNO';
-        message.innerHTML = `
-            <p style="font-size: 2rem; margin-bottom: 1.5rem; color: var(--explosion-yellow); font-weight: 700;">
-                🎯 AGORA É A VEZ DE:<br>
-                ${newPlayerName.toUpperCase()}!
-            </p>
-            <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 1rem;">
-                ⚠️ ${oldPlayerName}, não olhe a tela!
-            </p>
-            <p style="margin-top: 1.5rem; color: var(--water-foam); font-size: 1.1rem;">
-                Clique em "Continuar" quando ${newPlayerName} estiver pronto
-            </p>
+
+        // Criar overlay automático — sem botão, some em 1 segundo
+        const overlay = document.createElement('div');
+        overlay.id = 'turnOverlay';
+        overlay.style.cssText = `
+            position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.88);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            animation: fadeInOverlay 0.2s ease;
         `;
-        
-        buttons.innerHTML = `
-            <button class="btn btn-primary" onclick="game.continueMultiplayerTurn()">➡️ Continuar</button>
+        overlay.innerHTML = `
+            <div style="text-align:center; padding: 2rem;">
+                <div style="font-size: 3.5rem; margin-bottom: 1rem;">🔄</div>
+                <p style="font-size: 2.2rem; font-weight: 700; color: var(--explosion-yellow); margin-bottom: 0.8rem; font-family: 'Oswald', sans-serif; letter-spacing: 2px;">
+                    VEZ DE: ${newPlayerName.toUpperCase()}!
+                </p>
+            </div>
         `;
-        
-        modal.classList.add('active');
+
+        // Garantir que a animação existe
+        if (!document.getElementById('turnOverlayStyle')) {
+            const style = document.createElement('style');
+            style.id = 'turnOverlayStyle';
+            style.textContent = `
+                @keyframes fadeInOverlay  { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes fadeOutOverlay { from { opacity: 1; } to { opacity: 0; } }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(overlay);
+
+        // Some automaticamente após 1 segundo
+        setTimeout(() => {
+            overlay.style.animation = 'fadeOutOverlay 0.3s ease forwards';
+            setTimeout(() => {
+                overlay.remove();
+                this.continueMultiplayerTurn();
+            }, 300);
+        }, 1000);
     }
 
     continueMultiplayerTurn() {
-        document.getElementById('gameOverModal').classList.remove('active');
-        
-        // Renderizar tabuleiros
+        // Renderizar tabuleiros para o novo jogador
         this.renderMultiplayerBoards();
         this.updateMultiplayerUI();
-        
-        // FORÇAR esconder tabuleiro próprio
+
+        // Esconder tabuleiro próprio
         const playerBoard = document.getElementById('playerBoardSection');
         playerBoard.classList.add('multiplayer-hidden');
         playerBoard.style.display = 'none';
